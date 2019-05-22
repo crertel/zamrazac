@@ -14,9 +14,9 @@ defmodule Mix.Tasks.Zamrazac do
   use Mix.Task
 
   def run(_) do
-    IO.puts """
+    IO.puts("""
     usage:
 
-    """
+    """)
   end
 end

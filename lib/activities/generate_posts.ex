@@ -1,5 +1,4 @@
 defmodule Zamrazac.Activities.GeneratePosts do
-
   @doc """
   Function to convert blog posts from a directory.
 
@@ -19,6 +18,6 @@ defmodule Zamrazac.Activities.GeneratePosts do
   3. Assemble index/archive view for posts from metadata.
   """
   def generate(posts_directory) do
-    IO.inspect(posts_directory, label: "GENERATE" )
+    IO.inspect(posts_directory, label: "GENERATE")
   end
 end

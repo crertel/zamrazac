@@ -18,7 +18,7 @@ defmodule Zamrazac.Util do
   def get_default_blog_directory() do
     __ENV__.file
     |> Path.dirname()
-    |> Path.join( "../blog")
+    |> Path.join("../blog")
     |> Path.expand()
   end
 
@@ -26,5 +26,4 @@ defmodule Zamrazac.Util do
   Gets the image directory for the blog, using either the default or environment-defined directory.
   """
   def get_blog_image_directory(), do: Path.join(get_blog_directory(), "images")
-
 end
