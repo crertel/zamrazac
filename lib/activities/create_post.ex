@@ -23,7 +23,7 @@ defmodule Zamrazac.Activities.CreatePost do
       postname
     ))
     File.close(myfile)
-    Execv.exec([System.find_executable("vim"), filename])
+    Execv.exec([System.find_executable("vim"), "+", filename])
   end
 
   def blog_metadata(today, author, title) do
@@ -34,6 +34,7 @@ defmodule Zamrazac.Activities.CreatePost do
     date: #{today}
     tags: []
     ---
+
 
     """
   end
