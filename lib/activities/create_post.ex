@@ -9,16 +9,21 @@ defmodule Zamrazac.Activities.CreatePost do
   4. Open editor pointing at (2).
   """
   def create(postname, posts_directory) do
-    IO.inspect(postname, label: "CREATE" )
-    {:ok, myfile} = File.open(Path.join(posts_directory, postname) , [:write ])
-    IO.inspect(myfile)
+    System.cmd("mkdir", ["-p", posts_directory])
+    slug = postname
+           |> String.downcase()
+           #|> String.replace(~r//,"_")
+    date_string = DateTime.utc_now() |> DateTime.to_iso8601()
+    filename =  Path.join(posts_directory, "#{date_string}_#{slug}")
+    {:ok, myfile} = File.open( filename, [:write ])
     IO.binwrite(myfile,
-    blog_metadata(DateTime.utc_now() |> DateTime.to_iso8601(),
+    blog_metadata(
+      date_string,
       "Chris 'The Amazing' Ertel",
       postname
     ))
-    IO.puts("wrote to file")
     File.close(myfile)
+    Execv.exec([System.find_executable("vim"), filename])
   end
 
   def blog_metadata(today, author, title) do
@@ -27,7 +32,9 @@ defmodule Zamrazac.Activities.CreatePost do
     title: #{title}
     author: #{author}
     date: #{today}
+    tags: []
     ---
+
     """
   end
 end
