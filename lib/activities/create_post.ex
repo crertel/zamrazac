@@ -10,5 +10,24 @@ defmodule Zamrazac.Activities.CreatePost do
   """
   def create(postname, posts_directory) do
     IO.inspect(postname, label: "CREATE" )
+    {:ok, myfile} = File.open(Path.join(posts_directory, postname) , [:write ])
+    IO.inspect(myfile)
+    IO.binwrite(myfile,
+    blog_metadata(DateTime.utc_now() |> DateTime.to_iso8601(),
+      "Chris 'The Amazing' Ertel",
+      postname
+    ))
+    IO.puts("wrote to file")
+    File.close(myfile)
+  end
+
+  def blog_metadata(today, author, title) do
+    """
+    ---
+    title: #{title}
+    author: #{author}
+    date: #{today}
+    ---
+    """
   end
 end

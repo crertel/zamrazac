@@ -11,9 +11,10 @@ defmodule Mix.Tasks.Zamrazac.Create do
   * `BLOG_DIRECTORY` is a string for where to store or read blogposts.
   """
   use Mix.Task
+  alias Zamrazac.Util
 
   @shortdoc "Create a new post with a given title."
   def run([postname]) when is_binary(postname) do
-    Zamrazac.Activities.CreatePost.create(postname, "")
+    Zamrazac.Activities.CreatePost.create(postname, Util.get_blog_directory())
   end
 end
