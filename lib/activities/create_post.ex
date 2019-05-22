@@ -12,14 +12,14 @@ defmodule Zamrazac.Activities.CreatePost do
     System.cmd("mkdir", ["-p", posts_directory])
     slug = postname
            |> String.downcase()
-           #|> String.replace(~r//,"_")
+           |> String.replace(~r/[[:^alnum:]]/,"_")
     date_string = DateTime.utc_now() |> DateTime.to_iso8601()
     filename =  Path.join(posts_directory, "#{date_string}_#{slug}")
     {:ok, myfile} = File.open( filename, [:write ])
     IO.binwrite(myfile,
     blog_metadata(
       date_string,
-      "Chris 'The Amazing' Ertel",
+      "Chris Ertel",
       postname
     ))
     File.close(myfile)
