@@ -12,18 +12,19 @@ defmodule Zamrazac.Activities.CreatePost do
 
     slug =
       postname
+      |> String.trim()
       |> String.downcase()
       |> String.replace(~r/[[:^alnum:]]/, "_")
 
     date_string = DateTime.utc_now() |> DateTime.to_iso8601()
-    filename = Path.join(posts_directory, "#{date_string}_#{slug}")
+    filename = Path.join(posts_directory, "#{date_string}_#{slug}.md")
     {:ok, myfile} = File.open(filename, [:write])
 
     IO.binwrite(
       myfile,
       blog_metadata(
         date_string,
-        "Chris Ertel",
+        System.get_env("BLOG_AUTHOR") || "<anonymous>",
         postname
       )
     )

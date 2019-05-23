@@ -11,10 +11,11 @@ defmodule Mix.Tasks.Zamrazac.Generate do
   * `BLOG_DIRECTORY` is a string for where to store or read blogposts.
   """
   use Mix.Task
+  alias Zamrazac.Util
 
   @shortdoc "Plows through and converts posts to HTML."
-  def run([postname]) when is_binary(postname) do
-    blog_directory = System.get_env("BLOG_DIRECTORY")
-    Zamrazac.Activities.GeneratePosts.generate("")
+  def run(_) do
+    blog_directory = System.get_env("BLOG_DIRECTORY") || Util.get_blog_directory()
+    Zamrazac.Activities.GeneratePosts.generate(blog_directory)
   end
 end

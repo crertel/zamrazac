@@ -18,6 +18,13 @@ defmodule Zamrazac.Activities.GeneratePosts do
   3. Assemble index/archive view for posts from metadata.
   """
   def generate(posts_directory) do
-    IO.inspect(posts_directory, label: "GENERATE")
+    post_filenames = get_posts(posts_directory)
+    IO.inspect(post_filenames, label: "GENERATE")
+  end
+
+  def get_posts(posts_directory) do
+    {:ok, files} = File.ls(posts_directory)
+    Enum.filter(files, fn (filename) -> String.ends_with?(filename, ".md") end)
+    |> Enum.map( fn (filename) -> Path.join(posts_directory, filename) end)
   end
 end
