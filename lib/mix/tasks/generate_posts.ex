@@ -9,6 +9,8 @@ defmodule Mix.Tasks.Zamrazac.Generate do
   Environment variables for doing this:
 
   * `BLOG_DIRECTORY` is a string for where to store or read blogposts.
+  * `BLOG_TITLE` is the title for the blog.
+  * `OUTPUT_DIRECTORY` is a string for where to store the generated html posts
   """
   use Mix.Task
   alias Zamrazac.Util

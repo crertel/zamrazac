@@ -3,6 +3,10 @@ defmodule Zamrazac.Util do
   Module to hold kitchen-sink functions.
   """
 
+  def get_blog_title() do
+    System.get_env("BLOG_TITLE") || "<default blog>"
+  end
+
   @doc """
   get_blog_directory will return the directory where blog files are stored.
   First check the value of $BLOG_DIRECTORY in the environment, otherwise default to ./blog
