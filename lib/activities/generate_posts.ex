@@ -64,9 +64,11 @@ defmodule Zamrazac.Activities.GeneratePosts do
 
     {:ok, post_html, []} = Earmark.as_html(raw_post_text)
 
+    patched_html = patchup_images(post_html)
+
     post_html_path = Path.join( Util.get_output_directory(), post_html_filename)
     IO.puts "Writing post #{metadata[:title]} to #{post_html_path}"
-    write_post_file(post_html_path, metadata, post_html)
+    write_post_file(post_html_path, metadata, patched_html)
 
     metadata
   end
@@ -112,6 +114,12 @@ defmodule Zamrazac.Activities.GeneratePosts do
           {String.to_atom(key), String.trim(val)}
       end
     end)
+  end
+
+  def patchup_images(post_html) do
+    dom = Floki.parse(post_html)
+    patched_dom = Zamrazac.FlokiUtil.walk_dom(dom)
+    Floki.raw_html(patched_dom)
   end
 
   def post_template() do

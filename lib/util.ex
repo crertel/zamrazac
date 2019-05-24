@@ -58,4 +58,11 @@ defmodule Zamrazac.Util do
     b64_file_data = Base.encode64(file_data)
     "data:#{mimetype};base64,#{b64_file_data}"
   end
+
+  @doc """
+  Generates a termporary filename.
+
+  Makes no attempt at uniqueness across runs or against existing filesystem state.
+  """
+  def get_temp_filename(), do: "#{:erlang.phash2(make_ref())}"
 end
