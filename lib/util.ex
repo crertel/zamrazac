@@ -26,4 +26,13 @@ defmodule Zamrazac.Util do
   Gets the image directory for the blog, using either the default or environment-defined directory.
   """
   def get_blog_image_directory(), do: Path.join(get_blog_directory(), "images")
+
+  @doc """
+  Returns a file as a data-uri.
+  """
+  def get_file_as_data_uri(absolute_file_path, mimetype) do
+    {:ok, file_data} = File.read(absolute_file_path)
+    b64_file_data = Base.encode64(file_data)
+    "data:#{mimetype};base64,#{b64_file_data}"
+  end
 end
