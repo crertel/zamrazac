@@ -1,5 +1,5 @@
 defmodule Zamrazac.Activities.GeneratePosts do
-  @doc """
+  @moduledoc """
   Function to convert blog posts from a directory.
 
   Conversion steps are:
@@ -17,8 +17,13 @@ defmodule Zamrazac.Activities.GeneratePosts do
       2dvi. Add comment for original source of image.
   3. Assemble index/archive view for posts from metadata.
   """
+
+  alias Zamrazac.Util
+
   def generate(posts_directory) do
     post_paths = get_post_paths(posts_directory)
+    System.cmd("mkdir", ["-p", Util.get_output_directory()])
+    System.cmd("mkdir", ["-p", Util.get_blog_output_image_directory()])
     Enum.map(post_paths, &generate_post/1)
   end
 
@@ -36,7 +41,8 @@ defmodule Zamrazac.Activities.GeneratePosts do
 
     {:ok, post_html, []} = Earmark.as_html(raw_post_text)
 
-    post_html_path = "#{Path.basename(post_path)}.html"
+    post_html_path = Path.join( Util.get_output_directory(), "#{Path.basename(post_path,".md")}.html")
+    IO.puts "Writing post to #{post_html_path}"
     write_post_file(post_html_path, metadata, post_html)
   end
 
@@ -46,10 +52,13 @@ defmodule Zamrazac.Activities.GeneratePosts do
         IO.write(
           file,
           EEx.eval_string(post_template(),
-
-              post_title: "",
+          [
+              post_title: metadata[:title],
+              post_author: metadata[:author],
               post_metadata: inspect(metadata, pretty: true),
-              post_body: post_html
+              post_body: EExHTML.raw(post_html),
+          ],
+          engine: EExHTML.Engine
           )
         )
       end)
@@ -84,12 +93,23 @@ defmodule Zamrazac.Activities.GeneratePosts do
     <html>
       <head>
         <title><%= post_title %></title>
+        <style>
+        .post-main {
+          width: 960px;
+          margin: auto;
+        }
+        </style>
       </head>
       <body>
       <!--
       <%= post_metadata %>
       -->
-      <%= post_body %>
+        <div class="post-main">
+
+        <h1><%= post_title %></h1>
+        <h2><%= post_author %></h2>
+        <%= post_body %>
+        </div>
       </body>
     </html>
     """
