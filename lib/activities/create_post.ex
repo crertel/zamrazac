@@ -39,7 +39,7 @@ defmodule Zamrazac.Activities.CreatePost do
     title: #{title}
     author: #{author}
     date: #{today}
-    tags: []
+    tags:
     ---
 
 
