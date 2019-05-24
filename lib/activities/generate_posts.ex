@@ -31,13 +31,16 @@ defmodule Zamrazac.Activities.GeneratePosts do
   end
 
   def generate_post_index(index_path, post_metadatas) do
+
+    organized_posts = Enum.sort(post_metadatas, fn(md1, md2) -> DateTime.to_unix(md1[:date]) > DateTime.to_unix(md2[:date]) end)
+
     {:ok, _} =
       File.open(index_path, [:write], fn file ->
         IO.write(
           file,
           EEx.eval_string(index_template(),
           [
-            posts: post_metadatas,
+            posts: organized_posts,
             blog_title: Util.get_blog_title(),
           ],
           engine: EExHTML.Engine
@@ -157,7 +160,9 @@ defmodule Zamrazac.Activities.GeneratePosts do
           <h1><%= blog_title %> Posts</h1>
           <ul>
             <%= for post <- posts do %>
-              <li> <a href="<%= post[:filename]%>"> <%= post[:title] %> </a>
+              <li>
+                <%= post[:date] |> DateTime.to_iso8601()%>
+                <a href="<%= post[:filename]%>"> <%= post[:title] %> </a>
               </li>
             <% end %>
           </ul>
