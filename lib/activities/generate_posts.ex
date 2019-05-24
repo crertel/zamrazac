@@ -79,6 +79,7 @@ defmodule Zamrazac.Activities.GeneratePosts do
           EEx.eval_string(post_template(),
           [
               blog_title: Util.get_blog_title(),
+              post_date: metadata[:date] |> DateTime.to_iso8601() |> String.slice( 1..9),
               post_title: metadata[:title],
               post_author: metadata[:author],
               post_metadata: inspect(metadata, pretty: true),
@@ -133,7 +134,7 @@ defmodule Zamrazac.Activities.GeneratePosts do
         <div class="post-main">
 
         <h1><%= blog_title %></h1>
-        <h2><%= post_title %></h2>
+        <h2><%=post_date %> -- <%= post_title %></h2>
         <h3><%= post_author %></h3>
         <%= post_body %>
         </div>
@@ -161,7 +162,7 @@ defmodule Zamrazac.Activities.GeneratePosts do
           <ul>
             <%= for post <- posts do %>
               <li>
-                <%= post[:date] |> DateTime.to_iso8601()%>
+                <%= post[:date] |> DateTime.to_iso8601() |> String.slice( 1..9)%>
                 <a href="<%= post[:filename]%>"> <%= post[:title] %> </a>
               </li>
             <% end %>
