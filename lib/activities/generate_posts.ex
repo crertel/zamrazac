@@ -20,6 +20,9 @@ defmodule Zamrazac.Activities.GeneratePosts do
 
   alias Zamrazac.Util
 
+  @doc """
+  Function to crawl a posts directory and turn it into html, generate an index, and generate supporting image files.
+  """
   def generate(posts_directory) do
     post_paths = get_post_paths(posts_directory)
     System.cmd("mkdir", ["-p", Util.get_output_directory()])
@@ -30,10 +33,11 @@ defmodule Zamrazac.Activities.GeneratePosts do
     generate_post_index(index_path, post_metadatas)
   end
 
+  @doc """
+  Function that creates an index file given a pile of post metadat objects.
+  """
   def generate_post_index(index_path, post_metadatas) do
-
     organized_posts = Enum.sort(post_metadatas, fn(md1, md2) -> DateTime.to_unix(md1[:date]) > DateTime.to_unix(md2[:date]) end)
-
     {:ok, _} =
       File.open(index_path, [:write], fn file ->
         IO.write(
@@ -49,6 +53,9 @@ defmodule Zamrazac.Activities.GeneratePosts do
       end)
   end
 
+  @doc """
+  Crawls the posts directory and extracts the markdown files that look relevant.
+  """
   def get_post_paths(posts_directory) do
     {:ok, files} = File.ls(posts_directory)
 
@@ -56,15 +63,19 @@ defmodule Zamrazac.Activities.GeneratePosts do
     |> Enum.map(fn filename -> Path.join(posts_directory, filename) end)
   end
 
+  @doc """
+  Generates a post (html + images + metadata) and persists it.
+  """
   def generate_post(post_path) do
     {:ok, contents} = File.read(post_path)
     ["", raw_metadata_text, raw_post_text] = String.split(contents, "---\n", parts: 3)
-    post_html_filename = "#{Path.basename(post_path,".md")}.html"
-    metadata = parse_metadata(raw_metadata_text) ++ [filename: post_html_filename]
+    post_basename = Path.basename(post_path,".md")
+    post_html_filename = "#{post_basename}.html"
+    metadata = parse_metadata(raw_metadata_text) ++ [filename: post_html_filename, basename: post_basename]
 
     {:ok, post_html, []} = Earmark.as_html(raw_post_text)
 
-    patched_html = patchup_images(post_html)
+    patched_html = patchup_images(metadata, post_html)
 
     post_html_path = Path.join( Util.get_output_directory(), post_html_filename)
     IO.puts "Writing post #{metadata[:title]} to #{post_html_path}"
@@ -73,6 +84,9 @@ defmodule Zamrazac.Activities.GeneratePosts do
     metadata
   end
 
+  @doc """
+  Renders the actual post to an HTML file.
+  """
   def write_post_file(path, metadata, post_html) do
     {:ok, _} =
       File.open(path, [:write], fn file ->
@@ -93,6 +107,9 @@ defmodule Zamrazac.Activities.GeneratePosts do
       end)
   end
 
+  @doc """
+  Given a zamrazac-style post metadata string parses it out to a keyword list.
+  """
   def parse_metadata(raw_metadata_string) do
     metadata_string = raw_metadata_string |> String.trim()
 
@@ -116,9 +133,14 @@ defmodule Zamrazac.Activities.GeneratePosts do
     end)
   end
 
-  def patchup_images(post_html) do
+  @doc """
+  Given post metadata and markup, sets up image directory for the output and runs the routines that do image patchup.
+  """
+  def patchup_images(metadata, post_html) do
     dom = Floki.parse(post_html)
-    patched_dom = Zamrazac.FlokiUtil.walk_dom(dom)
+    image_storage_path = Path.join( Zamrazac.Util.get_blog_output_image_directory(), metadata[:basename])
+    System.cmd("mkdir", ["-p", image_storage_path])
+    patched_dom = Zamrazac.FlokiUtil.walk_dom(dom, image_storage_path)
     Floki.raw_html(patched_dom)
   end
 

@@ -65,4 +65,9 @@ defmodule Zamrazac.Util do
   Makes no attempt at uniqueness across runs or against existing filesystem state.
   """
   def get_temp_filename(), do: "#{:erlang.phash2(make_ref())}"
+
+  @doc """
+  Makes a SHA-256 hash of a binary and hex encodes it.
+  """
+  def shahexhash(str), do: Base.encode16(:crypto.hash(:sha256, str))
 end

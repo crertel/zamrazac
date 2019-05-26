@@ -33,6 +33,9 @@ defmodule Zamrazac.Activities.CreatePost do
     Execv.exec([System.find_executable("vim"), "+", filename])
   end
 
+  @doc """
+  Creates a zamrazac-style post metadata header given the date, author, and title.
+  """
   def blog_metadata(today, author, title) do
     """
     ---
