@@ -45,6 +45,9 @@ set -eou pipefail
 BLOG_TITLE="Swizzled Bits"
 BLOG_DIRECTORY="$HOME/.blog"
 BLOG_BUILD_PATH="$HOME/.blog_output"
+BLOG_URL="https://www.myblog.com"
+BLOG_DESCRIPTION="Description of your blog."
+BLOG_POSTS_ROOT="https://www.myblog.com/posts/"
 ZAMRAZAC_PATH="$HOME/projects/zamrazac" # or wherever you cloned it to
 
 mkdir -p "$BLOG_DIRECTORY"
@@ -59,6 +62,6 @@ popd () {
 }
 
 pushd "$ZAMRAZAC_PATH"
-BLOG_TITLE="$BLOG_TITLE" BLOG_DIRECTORY="$BLOG_DIRECTORY" OUTPUT_DIRECTORY="$BLOG_BUILD_PATH" mix zamrazac.generate
+BLOG_URL="$BLOG_URL" BLOG_DESCRIPTION="$BLOG_DESCRIPTION" BLOG_POSTS_ROOT="$BLOG_POSTS_ROOT" BLOG_TITLE="$BLOG_TITLE" BLOG_DIRECTORY="$BLOG_DIRECTORY" OUTPUT_DIRECTORY="$BLOG_BUILD_PATH" mix zamrazac.generate
 popd
 ```

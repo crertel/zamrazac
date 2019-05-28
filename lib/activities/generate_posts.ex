@@ -31,6 +31,9 @@ defmodule Zamrazac.Activities.GeneratePosts do
     index_path = Path.join(Util.get_output_directory(), "index.html")
     IO.puts "Writing index to #{index_path}"
     generate_post_index(index_path, post_metadatas)
+    feed_path = Path.join(Util.get_output_directory(), "feed.xml")
+    IO.puts "Writing feed to #{feed_path}"
+    generate_rss_feed(feed_path, post_metadatas)
   end
 
   @doc """
@@ -46,6 +49,7 @@ defmodule Zamrazac.Activities.GeneratePosts do
           [
             posts: organized_posts,
             blog_title: Util.get_blog_title(),
+            feed_url: Util.get_feed_url()
           ],
           engine: EExHTML.Engine
           )
@@ -71,7 +75,10 @@ defmodule Zamrazac.Activities.GeneratePosts do
     ["", raw_metadata_text, raw_post_text] = String.split(contents, "---\n", parts: 3)
     post_basename = Path.basename(post_path,".md")
     post_html_filename = "#{post_basename}.html"
-    metadata = parse_metadata(raw_metadata_text) ++ [filename: post_html_filename, basename: post_basename]
+    metadata = parse_metadata(raw_metadata_text) ++
+              [filename: post_html_filename,
+               basename: post_basename,
+               slug: "#{Util.get_blog_posts_root()}/#{URI.encode(post_basename)}"]
 
     {:ok, post_html, []} = Earmark.as_html(raw_post_text)
 
@@ -100,6 +107,30 @@ defmodule Zamrazac.Activities.GeneratePosts do
               post_author: metadata[:author],
               post_metadata: inspect(metadata, pretty: true),
               post_body: EExHTML.raw(post_html),
+              feed_url: Util.get_feed_url()
+          ],
+          engine: EExHTML.Engine
+          )
+        )
+      end)
+  end
+
+  @doc """
+  Renders the RSS feed for a blog.
+  """
+  def generate_rss_feed(feed_path, post_metadatas) do
+    organized_posts = Enum.sort(post_metadatas, fn(md1, md2) -> DateTime.to_unix(md1[:date]) > DateTime.to_unix(md2[:date]) end)
+    {:ok, _} =
+      File.open(feed_path, [:write], fn file ->
+        IO.write(
+          file,
+          EEx.eval_string(rss_template(),
+          [
+            posts: organized_posts,
+            blog_title: Util.get_blog_title(),
+            blog_link: Util.get_blog_url(),
+            blog_description: Util.get_blog_description(),
+            feed_url: Util.get_feed_url()
           ],
           engine: EExHTML.Engine
           )
@@ -156,6 +187,7 @@ defmodule Zamrazac.Activities.GeneratePosts do
           margin: auto;
         }
         </style>
+        <link rel="alternate" type="application/rss+xml" href="<%= feed_url %>" title="<%= blog_title %>">
       </head>
       <body>
       <!--
@@ -185,6 +217,7 @@ defmodule Zamrazac.Activities.GeneratePosts do
           margin: auto;
         }
         </style>
+        <link rel="alternate" type="application/rss+xml" href="<%= feed_url %>" title="<%= blog_title %>">
       </head>
       <body>
         <div class="post-main">
@@ -200,6 +233,28 @@ defmodule Zamrazac.Activities.GeneratePosts do
         </div>
       </body>
     </html>
+    """
+  end
+
+  def rss_template() do
+    """
+    <?xml version="1.0" encoding="UTF-8" ?>
+    <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+      <channel>
+      <title><%= blog_title %></title>
+      <link><%= blog_link %></link>
+      <description><%= blog_description %></description>
+      <atom:link href="<%= feed_url %>" rel="self" type="application/rss+xml" />
+      <%= for post <- posts do %>
+      <item>
+        <title><%= post[:title]%></title>
+        <link><%= post[:slug]%></link>
+        <pubDate><%= post[:date] |> Timex.format!("{RFC1123}") %></pubDate>
+        <guid isPermaLink="true"><%= post[:slug] %></guid>
+      </item>
+      <% end %>
+      </channel>
+    </rss>
     """
   end
 end

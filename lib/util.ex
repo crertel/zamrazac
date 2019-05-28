@@ -7,6 +7,23 @@ defmodule Zamrazac.Util do
     System.get_env("BLOG_TITLE") || "<default blog>"
   end
 
+  def get_blog_description() do
+    System.get_env("BLOG_DESCRIPTION") || "<default description>"
+  end
+
+  def get_blog_url() do
+    System.get_env("BLOG_URL") || "<default blog url>"
+  end
+
+  def get_blog_posts_root() do
+    System.get_env("BLOG_POSTS_ROOT") || "<default blog posts url>"
+  end
+
+  def get_feed_url() do
+    "#{get_blog_url()}/feed.xml"
+  end
+
+
   @doc """
   get_blog_directory will return the directory where blog files are stored.
   First check the value of $BLOG_DIRECTORY in the environment, otherwise default to ./blog

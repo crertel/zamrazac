@@ -11,6 +11,9 @@ defmodule Mix.Tasks.Zamrazac.Generate do
   * `BLOG_DIRECTORY` is a string for where to store or read blogposts.
   * `BLOG_TITLE` is the title for the blog.
   * `OUTPUT_DIRECTORY` is a string for where to store the generated html posts
+  * `BLOG_URL` is a string of the base URL for the main blog.
+  * `BLOG_POSTS_ROOT` is a string of the URL folder to find the posts.
+  * `BLOG_DESCRIPTION` is a short string (<200 chars) of what the blog is about.
   """
   use Mix.Task
   alias Zamrazac.Util
