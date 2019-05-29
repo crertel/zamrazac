@@ -68,6 +68,11 @@ defmodule Zamrazac.Util do
   def get_blog_output_image_directory(), do: Path.join(get_output_directory(), "images")
 
   @doc """
+  Gets the posts directory for the blog output, using either the default or environment-defined directory.
+  """
+  def get_blog_output_post_directory(), do: Path.join(get_output_directory(), "posts")
+
+  @doc """
   Returns a file as a data-uri.
   """
   def get_file_as_data_uri(absolute_file_path, mimetype) do

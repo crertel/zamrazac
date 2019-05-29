@@ -27,6 +27,7 @@ defmodule Zamrazac.Activities.GeneratePosts do
     post_paths = get_post_paths(posts_directory)
     System.cmd("mkdir", ["-p", Util.get_output_directory()])
     System.cmd("mkdir", ["-p", Util.get_blog_output_image_directory()])
+    System.cmd("mkdir", ["-p", Util.get_blog_output_post_directory()])
     post_metadatas = Enum.map(post_paths, &generate_post/1)
     index_path = Path.join(Util.get_output_directory(), "index.html")
     IO.puts "Writing index to #{index_path}"
@@ -84,7 +85,7 @@ defmodule Zamrazac.Activities.GeneratePosts do
 
     patched_html = patchup_images(metadata, post_html)
 
-    post_html_path = Path.join( Util.get_output_directory(), post_html_filename)
+    post_html_path = Path.join( Util.get_blog_output_post_directory(), post_html_filename)
     IO.puts "Writing post #{metadata[:title]} to #{post_html_path}"
     write_post_file(post_html_path, metadata, patched_html)
 
@@ -199,7 +200,10 @@ defmodule Zamrazac.Activities.GeneratePosts do
         <h2><%=post_date %> -- <%= post_title %></h2>
         <h3><%= post_author %></h3>
         <%= post_body %>
+
+        <small> <a href="../index.html">Back to index...</a> </small>
         </div>
+
       </body>
     </html>
     """
@@ -226,7 +230,7 @@ defmodule Zamrazac.Activities.GeneratePosts do
             <%= for post <- posts do %>
               <li>
                 <%= post[:date] |> DateTime.to_iso8601() |> String.slice( 1..9)%>
-                <a href="<%= post[:filename]%>"> <%= post[:title] %> </a>
+                <a href="../posts/<%= post[:filename]%>"> <%= post[:title] %> </a>
               </li>
             <% end %>
           </ul>
