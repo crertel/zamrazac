@@ -42,20 +42,15 @@ defmodule Zamrazac.Activities.GeneratePosts do
   """
   def generate_post_index(index_path, post_metadatas) do
     organized_posts = Enum.sort(post_metadatas, fn(md1, md2) -> DateTime.to_unix(md1[:date]) > DateTime.to_unix(md2[:date]) end)
-    {:ok, _} =
-      File.open(index_path, [:write], fn file ->
-        IO.write(
-          file,
-          EEx.eval_string(index_template(),
-          [
-            posts: organized_posts,
-            blog_title: Util.get_blog_title(),
-            feed_url: Util.get_feed_url()
-          ],
-          engine: EExHTML.Engine
-          )
-        )
-      end)
+    index_content = EEx.eval_string(index_template(),
+    [
+      posts: organized_posts,
+      blog_title: Util.get_blog_title(),
+      feed_url: Util.get_feed_url()
+    ],
+    engine: EExHTML.Engine
+    )
+    :ok = File.write(index_path, "#{index_content}" )
   end
 
   @doc """
@@ -73,22 +68,21 @@ defmodule Zamrazac.Activities.GeneratePosts do
   """
   def generate_post(post_path) do
     {:ok, contents} = File.read(post_path)
-    ["", raw_metadata_text, raw_post_text] = String.split(contents, "---\n", parts: 3)
-    post_basename = Path.basename(post_path,".md")
-    post_html_filename = "#{post_basename}.html"
-    metadata = parse_metadata(raw_metadata_text) ++
-              [filename: post_html_filename,
-               basename: post_basename,
-               slug: "#{Util.get_blog_posts_root()}#{URI.encode(post_basename)}.html"]
+      ["", raw_metadata_text, raw_post_text] = String.split(contents, "---\n", parts: 3)
+      post_basename = Path.basename(post_path,".md")
+      post_html_filename = "#{post_basename}.html"
+      metadata = parse_metadata(raw_metadata_text) ++
+                [filename: post_html_filename,
+                basename: post_basename,
+                slug: "#{Util.get_blog_posts_root()}#{URI.encode(post_basename)}.html"]
 
-    {:ok, post_html, []} = Earmark.as_html(raw_post_text)
+      {:ok, post_html, []} = Earmark.as_html(raw_post_text)
 
-    patched_html = patchup_images(metadata, post_html)
+      patched_html = patchup_images(metadata, post_html)
 
-    post_html_path = Path.join( Util.get_blog_output_post_directory(), post_html_filename)
-    IO.puts "Writing post #{metadata[:title]} to #{post_html_path}"
-    write_post_file(post_html_path, metadata, patched_html)
-
+      post_html_path = Path.join( Util.get_blog_output_post_directory(), post_html_filename)
+      IO.puts "Writing post #{metadata[:title]} to #{post_html_path}"
+      write_post_file(post_html_path, metadata, patched_html)
     metadata
   end
 
@@ -96,24 +90,20 @@ defmodule Zamrazac.Activities.GeneratePosts do
   Renders the actual post to an HTML file.
   """
   def write_post_file(path, metadata, post_html) do
-    {:ok, _} =
-      File.open(path, [:write], fn file ->
-        IO.write(
-          file,
-          EEx.eval_string(post_template(),
-          [
-              blog_title: Util.get_blog_title(),
-              post_date: metadata[:date] |> DateTime.to_iso8601() |> String.slice( 1..9),
-              post_title: metadata[:title],
-              post_author: metadata[:author],
-              post_metadata: inspect(metadata, pretty: true),
-              post_body: EExHTML.raw(post_html),
-              feed_url: Util.get_feed_url()
-          ],
-          engine: EExHTML.Engine
-          )
-        )
-      end)
+    post_content = EEx.eval_string(post_template(),
+    [
+        blog_title: Util.get_blog_title(),
+        post_date: metadata[:date] |> DateTime.to_iso8601() |> String.slice( 1..9),
+        post_title: metadata[:title],
+        post_author: metadata[:author],
+        post_metadata: inspect(metadata, pretty: true),
+        post_body: EExHTML.raw(post_html),
+        feed_url: Util.get_feed_url()
+    ],
+    engine: EExHTML.Engine
+  )
+
+    :ok = File.write( path, "#{post_content}")
   end
 
   @doc """
@@ -121,22 +111,17 @@ defmodule Zamrazac.Activities.GeneratePosts do
   """
   def generate_rss_feed(feed_path, post_metadatas) do
     organized_posts = Enum.sort(post_metadatas, fn(md1, md2) -> DateTime.to_unix(md1[:date]) > DateTime.to_unix(md2[:date]) end)
-    {:ok, _} =
-      File.open(feed_path, [:write], fn file ->
-        IO.write(
-          file,
-          EEx.eval_string(rss_template(),
-          [
-            posts: organized_posts,
-            blog_title: Util.get_blog_title(),
-            blog_link: Util.get_blog_url(),
-            blog_description: Util.get_blog_description(),
-            feed_url: Util.get_feed_url()
-          ],
-          engine: EExHTML.Engine
-          )
-        )
-      end)
+    feed_content = EEx.eval_string(rss_template(),
+    [
+      posts: organized_posts,
+      blog_title: Util.get_blog_title(),
+      blog_link: Util.get_blog_url(),
+      blog_description: Util.get_blog_description(),
+      feed_url: Util.get_feed_url()
+    ],
+    engine: EExHTML.Engine
+    )
+    :ok  = File.write( feed_path, "#{feed_content}" )
   end
 
   @doc """
@@ -181,6 +166,7 @@ defmodule Zamrazac.Activities.GeneratePosts do
     <!DOCTYPE html>
     <html>
       <head>
+        <meta charset="utf-8" />
         <title><%= post_title %></title>
         <style>
         .post-main {
@@ -214,6 +200,7 @@ defmodule Zamrazac.Activities.GeneratePosts do
     <!DOCTYPE html>
     <html>
       <head>
+        <meta charset="utf-8" />
         <title><%= blog_title %></title>
         <style>
         .post-main {
