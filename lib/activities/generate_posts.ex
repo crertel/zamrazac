@@ -79,7 +79,7 @@ defmodule Zamrazac.Activities.GeneratePosts do
     metadata = parse_metadata(raw_metadata_text) ++
               [filename: post_html_filename,
                basename: post_basename,
-               slug: "#{Util.get_blog_posts_root()}/#{URI.encode(post_basename)}"]
+               slug: "#{Util.get_blog_posts_root()}#{URI.encode(post_basename)}.html"]
 
     {:ok, post_html, []} = Earmark.as_html(raw_post_text)
 
