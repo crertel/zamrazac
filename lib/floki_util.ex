@@ -18,9 +18,13 @@ defmodule Zamrazac.FlokiUtil do
           attrs = attributes_to_keywords(attributes)
           image_src = attrs[:src]
           IO.inspect("Referenced image #{image_src}", limit: :infinity)
-          {dithered_file_encoded, _temp_image_path} = convert_image(image_src, image_storage_path)
+          {dithered_file_encoded, _temp_image_path, is_local} = convert_image(image_src, image_storage_path)
           patched_attrs = Keyword.put(attrs, :src, dithered_file_encoded) |> keywords_to_attributes()
-          {"a", [{"href", image_src}],[{"img", patched_attrs, walk_dom(children, image_storage_path) }]}
+          if is_local do
+            {"img", patched_attrs, walk_dom(children, image_storage_path) }
+          else
+            {"a", [{"href", image_src}],[{"img", patched_attrs, walk_dom(children, image_storage_path) }]}
+          end
         {tag, attributes, children} ->
           {tag, attributes, walk_dom(children, image_storage_path) }
       end
@@ -53,24 +57,47 @@ defmodule Zamrazac.FlokiUtil do
   def convert_image(url, image_storage_path) do
     temp_image_name = Zamrazac.Util.shahexhash(url)
     temp_image_path = Path.join(image_storage_path, temp_image_name)
-    temp_dithered_image_path = "#{temp_image_path}_dithered.png"
-    ^temp_image_path = maybe_download_image(temp_image_path, url)
-    {dithered_file_encoded, ^temp_dithered_image_path} = maybe_dither_image(temp_dithered_image_path, temp_image_path)
-    {dithered_file_encoded, temp_image_path}
+    uri = URI.parse(url)
+    case uri.scheme do
+      "file" ->
+        temp_dithered_image_path = "#{temp_image_path}_dithered.png"
+        ^temp_image_path = maybe_download_image(temp_image_path, Path.expand(Path.join(uri.host, uri.path)), true)
+        {dithered_file_encoded, ^temp_dithered_image_path} = maybe_dither_image(temp_dithered_image_path, temp_image_path)
+        {dithered_file_encoded, temp_image_path, true}
+      "http" ->
+        temp_dithered_image_path = "#{temp_image_path}_dithered.png"
+        ^temp_image_path = maybe_download_image(temp_image_path, url, false)
+        {dithered_file_encoded, ^temp_dithered_image_path} = maybe_dither_image(temp_dithered_image_path, temp_image_path)
+        {dithered_file_encoded, temp_image_path, false}
+      "https" ->
+        temp_dithered_image_path = "#{temp_image_path}_dithered.png"
+        ^temp_image_path = maybe_download_image(temp_image_path, url, false)
+        {dithered_file_encoded, ^temp_dithered_image_path} = maybe_dither_image(temp_dithered_image_path, temp_image_path)
+        {dithered_file_encoded, temp_image_path, false}
+      _ ->
+        IO.inspect("\tFailed to locate image at  #{url}...", limit: :infinity)
+        {"", "", true}
+    end
   end
 
   @doc """
   Function to download an image from a url and save it somewhere if it isn't already there.
   """
-  def maybe_download_image(image_path, url) do
+  def maybe_download_image(image_path, url, is_local) do
     case File.exists?(image_path) do
      true ->
         IO.inspect("\tReusing image #{image_path}...", limit: :infinity)
         image_path
      false ->
-        IO.inspect("\tDownloading image #{image_path}...", limit: :infinity)
-        System.cmd("curl", [url, "-L", "-o", image_path] )
-        image_path
+        if is_local do
+          IO.inspect("\tCopying local image from #{url} to #{image_path}...", limit: :infinity)
+          System.cmd("cp", [url, image_path])
+          image_path
+        else
+          IO.inspect("\tDownloading image #{image_path}...", limit: :infinity)
+          System.cmd("curl", [url, "-L", "-o", image_path] )
+          image_path
+        end
     end
   end
 
