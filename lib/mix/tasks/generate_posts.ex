@@ -14,6 +14,7 @@ defmodule Mix.Tasks.Zamrazac.Generate do
   * `BLOG_URL` is a string of the base URL for the main blog.
   * `BLOG_POSTS_ROOT` is a string of the URL folder to find the posts.
   * `BLOG_DESCRIPTION` is a short string (<200 chars) of what the blog is about.
+  * `BLOG_STYLES` is a path to a styles file if available.
   """
   use Mix.Task
   alias Zamrazac.Util
