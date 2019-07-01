@@ -92,4 +92,15 @@ defmodule Zamrazac.Util do
   Makes a SHA-256 hash of a binary and hex encodes it.
   """
   def shahexhash(str), do: Base.encode16(:crypto.hash(:sha256, str))
+
+  @doc """
+  Gets the styles from a file, if available.
+  """
+  def get_styles() do
+    styles_path = System.get_env("BLOG_STYLES") |> Path.expand()
+    case File.read(styles_path) do
+      {:ok, file_data} -> file_data
+        _ -> ""
+    end
+  end
 end

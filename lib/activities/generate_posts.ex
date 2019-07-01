@@ -46,7 +46,8 @@ defmodule Zamrazac.Activities.GeneratePosts do
     [
       posts: organized_posts,
       blog_title: Util.get_blog_title(),
-      feed_url: Util.get_feed_url()
+      feed_url: Util.get_feed_url(),
+      styles: EExHTML.raw(Util.get_styles())
     ],
     engine: EExHTML.Engine
     )
@@ -98,7 +99,8 @@ defmodule Zamrazac.Activities.GeneratePosts do
         post_author: metadata[:author],
         post_metadata: inspect(metadata, pretty: true),
         post_body: EExHTML.raw(post_html),
-        feed_url: Util.get_feed_url()
+        feed_url: Util.get_feed_url(),
+        styles: EExHTML.raw(Util.get_styles())
     ],
     engine: EExHTML.Engine
   )
@@ -167,12 +169,17 @@ defmodule Zamrazac.Activities.GeneratePosts do
     <html>
       <head>
         <meta charset="utf-8" />
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta http-equiv="Pragma" content="no-cache" />
+        <meta http-equiv="Expires" content="0" />
         <title><%= post_title %></title>
         <style>
         .post-main {
           width: 960px;
           margin: auto;
         }
+
+        <%= styles || "" %>
         </style>
         <link rel="alternate" type="application/rss+xml" href="<%= feed_url %>" title="<%= blog_title %>">
       </head>
@@ -201,12 +208,17 @@ defmodule Zamrazac.Activities.GeneratePosts do
     <html>
       <head>
         <meta charset="utf-8" />
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta http-equiv="Pragma" content="no-cache" />
+        <meta http-equiv="Expires" content="0" />
         <title><%= blog_title %></title>
         <style>
         .post-main {
           width: 960px;
           margin: auto;
         }
+
+        <%= styles || "" %>
         </style>
         <link rel="alternate" type="application/rss+xml" href="<%= feed_url %>" title="<%= blog_title %>">
       </head>
