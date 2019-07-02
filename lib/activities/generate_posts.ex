@@ -33,7 +33,7 @@ defmodule Zamrazac.Activities.GeneratePosts do
       a_metadata[:date] |> DateTime.to_iso8601()
     end) |> Enum.reverse()
 
-    chunked_posts = Enum.chunk_every( [nil] ++ sorted_posts ++ [nil], 3, 1)
+    chunked_posts = Enum.chunk_every( [nil] ++ sorted_posts ++ [nil], 3, 1, :discard)
     Enum.map(chunked_posts, &write_post/1)
 
     post_metadatas = for {metadata,_,_,_} <- sorted_posts, into: [], do: metadata
@@ -66,8 +66,6 @@ defmodule Zamrazac.Activities.GeneratePosts do
     patched_metadata = Keyword.merge(metadata, [next_post_path: "../posts/#{next_metadata[:filename]}", next_post_title: next_metadata[:title],
     prev_post_path: "../posts/#{prev_metadata[:filename]}", prev_post_title: prev_metadata[:title]])
     write_post_file(post_html_path, patched_metadata, post_body_html)
-  end
-  def write_post([_post, nil]) do
   end
 
   @doc """
