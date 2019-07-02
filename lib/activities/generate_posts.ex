@@ -29,9 +29,9 @@ defmodule Zamrazac.Activities.GeneratePosts do
     System.cmd("mkdir", ["-p", Util.get_blog_output_image_directory()])
     System.cmd("mkdir", ["-p", Util.get_blog_output_post_directory()])
     posts = Enum.map(post_paths, &parse_post/1)
-    sorted_posts = Enum.sort(posts, fn({a_metadata, _, _, _}, {b_metadata, _, _, _}) ->
-        b_metadata[:date] >= a_metadata[:date]
-      end)
+    sorted_posts = Enum.sort_by(posts, fn({a_metadata, _, _, _}) ->
+      a_metadata[:date] |> DateTime.to_iso8601()
+    end) |> Enum.reverse()
 
     chunked_posts = Enum.chunk_every( [nil] ++ sorted_posts ++ [nil], 3, 1)
     Enum.map(chunked_posts, &write_post/1)
@@ -46,14 +46,16 @@ defmodule Zamrazac.Activities.GeneratePosts do
     {next_metadata, _, _, _} = next_post
     post_html_path = Path.join( Util.get_blog_output_post_directory(), post_html_path)
     IO.puts "Writing post #{metadata[:title]} to #{post_html_path}"
-    write_post_file(post_html_path, metadata, post_body_html)
+    patched_metadata = Keyword.merge(metadata, [next_post_path: "../posts/#{next_metadata[:filename]}", next_post_title: next_metadata[:title]])
+    write_post_file(post_html_path, patched_metadata, post_body_html)
   end
   def write_post([prev_post, post, nil]) do
     {metadata, post_body_html, _post_path, post_html_path} = post
     {prev_metadata, _, _, _} = prev_post
     post_html_path = Path.join( Util.get_blog_output_post_directory(), post_html_path)
     IO.puts "Writing post #{metadata[:title]} to #{post_html_path}"
-    write_post_file(post_html_path, metadata, post_body_html)
+    patched_metadata = Keyword.merge(metadata, [prev_post_path: "../posts/#{prev_metadata[:filename]}", prev_post_title: prev_metadata[:title]])
+    write_post_file(post_html_path, patched_metadata, post_body_html)
   end
   def write_post([prev_post, post, next_post]) do
     {metadata, post_body_html, _post_path, post_html_path} = post
@@ -61,16 +63,17 @@ defmodule Zamrazac.Activities.GeneratePosts do
     {next_metadata, _, _, _} = next_post
     post_html_path = Path.join( Util.get_blog_output_post_directory(), post_html_path)
     IO.puts "Writing post #{metadata[:title]} to #{post_html_path}"
-    write_post_file(post_html_path, metadata, post_body_html)
+    patched_metadata = Keyword.merge(metadata, [next_post_path: "../posts/#{next_metadata[:filename]}", next_post_title: next_metadata[:title],
+    prev_post_path: "../posts/#{prev_metadata[:filename]}", prev_post_title: prev_metadata[:title]])
+    write_post_file(post_html_path, patched_metadata, post_body_html)
   end
-  def write_post([post, nil]) do
+  def write_post([_post, nil]) do
   end
 
   @doc """
   Function that creates an index file given a pile of post metadata objects.
   """
   def generate_post_index(post_metadatas) do
-    IO.inspect(post_metadatas, label: ">>>")
     index_path = Path.join(Util.get_output_directory(), "index.html")
     IO.puts "Writing index to #{index_path}"
 
@@ -115,17 +118,6 @@ defmodule Zamrazac.Activities.GeneratePosts do
       {metadata, patched_html, post_path, post_html_filename}
   end
 
-  #@doc """
-  #Generates a post (html + images + metadata) and persists it.
-  #"""
-  #def generate_post(post_path) do
-  #  {metadata, post_body_html, _post_path, post_html_path} = parse_post(post_path)
-  #  post_html_path = Path.join( Util.get_blog_output_post_directory(), post_html_path)
-  #  IO.puts "Writing post #{metadata[:title]} to #{post_html_path}"
-  #  write_post_file(post_html_path, metadata, post_body_html)
-  #  metadata
-  #end
-
   @doc """
   Renders the actual post to an HTML file.
   """
@@ -139,7 +131,11 @@ defmodule Zamrazac.Activities.GeneratePosts do
         post_metadata: inspect(metadata, pretty: true),
         post_body: EExHTML.raw(post_html),
         feed_url: Util.get_feed_url(),
-        styles: EExHTML.raw(Util.get_styles())
+        styles: EExHTML.raw(Util.get_styles()),
+        next_post_title: metadata[:next_post_title] || "",
+        next_post_path: metadata[:next_post_path] || "",
+        prev_post_title: metadata[:prev_post_title] || "",
+        prev_post_path: metadata[:prev_post_path] || "",
     ],
     engine: EExHTML.Engine
   )
@@ -235,9 +231,26 @@ defmodule Zamrazac.Activities.GeneratePosts do
         <h3><%= post_author %></h3>
         <%= post_body %>
 
-        <small> <a href="../index.html">Back to index...</a> </small>
+        <small>
+        <table style="width:100%; text-align: center;">
+          <tr>
+          <td>
+          <%= if next_post_path != "" do %>
+          <a href="<%= next_post_path %>"> << <%= next_post_title %> </a>
+          <% end %>
+          </td>
+          <td>
+          <a href="../index.html">Back to index...</a>
+          </td>
+          <td>
+          <%= if prev_post_path != "" do %>
+            <a href="<%= prev_post_path %>"> <%= prev_post_title %> >> </a>
+          <% end %>
+          </td>
+          </tr>
+        </table>
+        </small>
         </div>
-
       </body>
     </html>
     """
