@@ -223,30 +223,35 @@ defmodule Zamrazac.Activities.GeneratePosts do
       <%= post_metadata %>
       -->
         <div class="post-main">
+        <small>
+          <div class="post-nav-container">
+            <%= if next_post_path != "" do %>
+            <a href="<%= next_post_path %>" class="post-nav-link"> << <%= next_post_title %> </a>
+            <% end %>
+            <a href="../index.html" class="post-nav-link">Back to index...</a>
+            <%= if prev_post_path != "" do %>
+              <a href="<%= prev_post_path %>" class="post-nav-link"> <%= prev_post_title %> >> </a>
+            <% end %>
+          </div>
+        </small>
+        <hr>
 
         <h1><%= blog_title %></h1>
         <h2><%=post_date %> -- <%= post_title %></h2>
         <h3><%= post_author %></h3>
         <%= post_body %>
 
+        <hr>
         <small>
-        <table style="width:100%; text-align: center;">
-          <tr>
-          <td>
-          <%= if next_post_path != "" do %>
-          <a href="<%= next_post_path %>"> << <%= next_post_title %> </a>
-          <% end %>
-          </td>
-          <td>
-          <a href="../index.html">Back to index...</a>
-          </td>
-          <td>
-          <%= if prev_post_path != "" do %>
-            <a href="<%= prev_post_path %>"> <%= prev_post_title %> >> </a>
-          <% end %>
-          </td>
-          </tr>
-        </table>
+          <div class="post-nav-container">
+            <%= if next_post_path != "" do %>
+            <a href="<%= next_post_path %>" class="post-nav-link"> << <%= next_post_title %> </a>
+            <% end %>
+            <a href="../index.html" class="post-nav-link">Back to index...</a>
+            <%= if prev_post_path != "" do %>
+              <a href="<%= prev_post_path %>" class="post-nav-link"> <%= prev_post_title %> >> </a>
+            <% end %>
+          </div>
         </small>
         </div>
       </body>
