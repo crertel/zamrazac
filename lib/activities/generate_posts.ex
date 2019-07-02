@@ -28,23 +28,55 @@ defmodule Zamrazac.Activities.GeneratePosts do
     System.cmd("mkdir", ["-p", Util.get_output_directory()])
     System.cmd("mkdir", ["-p", Util.get_blog_output_image_directory()])
     System.cmd("mkdir", ["-p", Util.get_blog_output_post_directory()])
-    post_metadatas = Enum.map(post_paths, &generate_post/1)
-    index_path = Path.join(Util.get_output_directory(), "index.html")
-    IO.puts "Writing index to #{index_path}"
-    generate_post_index(index_path, post_metadatas)
-    feed_path = Path.join(Util.get_output_directory(), "feed.xml")
-    IO.puts "Writing feed to #{feed_path}"
-    generate_rss_feed(feed_path, post_metadatas)
+    posts = Enum.map(post_paths, &parse_post/1)
+    sorted_posts = Enum.sort(posts, fn({a_metadata, _, _, _}, {b_metadata, _, _, _}) ->
+        b_metadata[:date] >= a_metadata[:date]
+      end)
+
+    chunked_posts = Enum.chunk_every( [nil] ++ sorted_posts ++ [nil], 3, 1)
+    Enum.map(chunked_posts, &write_post/1)
+
+    post_metadatas = for {metadata,_,_,_} <- sorted_posts, into: [], do: metadata
+    generate_post_index(post_metadatas)
+    generate_rss_feed(post_metadatas)
+  end
+
+  def write_post([nil, post, next_post]) do
+    {metadata, post_body_html, _post_path, post_html_path} = post
+    {next_metadata, _, _, _} = next_post
+    post_html_path = Path.join( Util.get_blog_output_post_directory(), post_html_path)
+    IO.puts "Writing post #{metadata[:title]} to #{post_html_path}"
+    write_post_file(post_html_path, metadata, post_body_html)
+  end
+  def write_post([prev_post, post, nil]) do
+    {metadata, post_body_html, _post_path, post_html_path} = post
+    {prev_metadata, _, _, _} = prev_post
+    post_html_path = Path.join( Util.get_blog_output_post_directory(), post_html_path)
+    IO.puts "Writing post #{metadata[:title]} to #{post_html_path}"
+    write_post_file(post_html_path, metadata, post_body_html)
+  end
+  def write_post([prev_post, post, next_post]) do
+    {metadata, post_body_html, _post_path, post_html_path} = post
+    {prev_metadata, _, _, _} = prev_post
+    {next_metadata, _, _, _} = next_post
+    post_html_path = Path.join( Util.get_blog_output_post_directory(), post_html_path)
+    IO.puts "Writing post #{metadata[:title]} to #{post_html_path}"
+    write_post_file(post_html_path, metadata, post_body_html)
+  end
+  def write_post([post, nil]) do
   end
 
   @doc """
-  Function that creates an index file given a pile of post metadat objects.
+  Function that creates an index file given a pile of post metadata objects.
   """
-  def generate_post_index(index_path, post_metadatas) do
-    organized_posts = Enum.sort(post_metadatas, fn(md1, md2) -> DateTime.to_unix(md1[:date]) > DateTime.to_unix(md2[:date]) end)
+  def generate_post_index(post_metadatas) do
+    IO.inspect(post_metadatas, label: ">>>")
+    index_path = Path.join(Util.get_output_directory(), "index.html")
+    IO.puts "Writing index to #{index_path}"
+
     index_content = EEx.eval_string(index_template(),
     [
-      posts: organized_posts,
+      posts: post_metadatas,
       blog_title: Util.get_blog_title(),
       feed_url: Util.get_feed_url(),
       styles: EExHTML.raw(Util.get_styles())
@@ -65,9 +97,9 @@ defmodule Zamrazac.Activities.GeneratePosts do
   end
 
   @doc """
-  Generates a post (html + images + metadata) and persists it.
+  Parses a post into the metadata, body html, and post path.
   """
-  def generate_post(post_path) do
+  def parse_post(post_path) do
     {:ok, contents} = File.read(post_path)
       ["", raw_metadata_text, raw_post_text] = String.split(contents, "---\n", parts: 3)
       post_basename = Path.basename(post_path,".md")
@@ -80,12 +112,19 @@ defmodule Zamrazac.Activities.GeneratePosts do
       {:ok, post_html, []} = Earmark.as_html(raw_post_text)
 
       patched_html = patchup_images(metadata, post_html)
-
-      post_html_path = Path.join( Util.get_blog_output_post_directory(), post_html_filename)
-      IO.puts "Writing post #{metadata[:title]} to #{post_html_path}"
-      write_post_file(post_html_path, metadata, patched_html)
-    metadata
+      {metadata, patched_html, post_path, post_html_filename}
   end
+
+  #@doc """
+  #Generates a post (html + images + metadata) and persists it.
+  #"""
+  #def generate_post(post_path) do
+  #  {metadata, post_body_html, _post_path, post_html_path} = parse_post(post_path)
+  #  post_html_path = Path.join( Util.get_blog_output_post_directory(), post_html_path)
+  #  IO.puts "Writing post #{metadata[:title]} to #{post_html_path}"
+  #  write_post_file(post_html_path, metadata, post_body_html)
+  #  metadata
+  #end
 
   @doc """
   Renders the actual post to an HTML file.
@@ -111,7 +150,9 @@ defmodule Zamrazac.Activities.GeneratePosts do
   @doc """
   Renders the RSS feed for a blog.
   """
-  def generate_rss_feed(feed_path, post_metadatas) do
+  def generate_rss_feed(post_metadatas) do
+    feed_path = Path.join(Util.get_output_directory(), "feed.xml")
+    IO.puts "Writing feed to #{feed_path}"
     organized_posts = Enum.sort(post_metadatas, fn(md1, md2) -> DateTime.to_unix(md1[:date]) > DateTime.to_unix(md2[:date]) end)
     feed_content = EEx.eval_string(rss_template(),
     [
@@ -228,7 +269,7 @@ defmodule Zamrazac.Activities.GeneratePosts do
           <ul>
             <%= for post <- posts do %>
               <li>
-                <%= post[:date] |> DateTime.to_iso8601() |> String.slice( 1..9)%>
+                <%= post[:date] |> DateTime.to_iso8601() |> String.slice( 0..9)%>
                 <a href="../posts/<%= post[:filename]%>"> <%= post[:title] %> </a>
               </li>
             <% end %>
