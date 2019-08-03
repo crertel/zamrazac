@@ -9,3 +9,5 @@ erl_crash.dump
 /config/*.secret.exs
 /.vscode
 /.elixir_ls
+/blog
+/blog_output
