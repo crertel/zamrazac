@@ -97,10 +97,12 @@ defmodule Zamrazac.Util do
   Gets the styles from a file, if available.
   """
   def get_styles() do
-    styles_path = System.get_env("BLOG_STYLES") |> Path.expand()
-    case File.read(styles_path) do
-      {:ok, file_data} -> file_data
-        _ -> ""
+    case System.get_env("BLOG_STYLES") do
+      nil -> ""
+      blog_styles -> case File.read(blog_styles |> Path.expand()) do
+        {:ok, file_data} -> file_data
+          _ -> ""
+      end
     end
   end
 end
