@@ -41,6 +41,12 @@ defmodule Zamrazac.Activities.GeneratePosts do
     generate_rss_feed(post_metadatas)
   end
 
+  def write_post([nil, post, nil]) do
+    {metadata, post_body_html, _post_path, post_html_path} = post
+    post_html_path = Path.join( Util.get_blog_output_post_directory(), post_html_path)
+    IO.puts "Writing post #{metadata[:title]} to #{post_html_path}"
+    write_post_file(post_html_path, metadata, post_body_html)
+  end
   def write_post([nil, post, next_post]) do
     {metadata, post_body_html, _post_path, post_html_path} = post
     {next_metadata, _, _, _} = next_post
