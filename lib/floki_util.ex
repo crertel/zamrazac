@@ -14,6 +14,12 @@ defmodule Zamrazac.FlokiUtil do
     for element <- elements do
       case element do
         text when is_binary(text) -> text
+        {"x-script", attributes, children} ->
+          attrs = attributes_to_keywords(attributes)
+          #IO.inspect("Encountered script tag")
+          #IO.inspect(attrs)
+          #IO.inspect(children)
+          {"script", attributes, walk_dom([], image_storage_path) }
         {"img", attributes, children} ->
           attrs = attributes_to_keywords(attributes)
           image_src = attrs[:src]
@@ -26,6 +32,7 @@ defmodule Zamrazac.FlokiUtil do
             {"a", [{"href", image_src}],[{"img", patched_attrs, walk_dom(children, image_storage_path) }]}
           end
         {tag, attributes, children} ->
+          IO.inspect element
           {tag, attributes, walk_dom(children, image_storage_path) }
       end
     end
