@@ -21,11 +21,11 @@ defmodule Zamrazac.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:floki, "~> 0.21.0"},
-      {:earmark, "~> 1.3.2"},
+      {:floki, "~> 0.29.0"},
+      {:earmark, "~> 1.4.5"},
       {:execv, "~> 0.1.2"},
       {:eex_html, "~> 1.0.0"},
-      {:timex, "~> 3.5.0"}
+      {:timex, "~> 3.6.2"}
     ]
   end
 end
