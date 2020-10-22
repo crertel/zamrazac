@@ -33,62 +33,65 @@ defmodule Zamrazac.Activities.GeneratePosts do
     posts = Enum.map(post_paths, &Input.Post.parse_post/1)
 
     sorted_posts =
-      Enum.sort_by(posts, fn {a_metadata, _, _, _} ->
+      Enum.sort_by(posts, fn %Input.Post{metadata: a_metadata} ->
         a_metadata[:date] |> DateTime.to_iso8601()
       end)
       |> Enum.reverse()
 
+    post_metadatas = for %Input.Post{metadata: metadata} <- sorted_posts, into: [], do: metadata
+    # agg_post_data = aggregate_metadata(post_metadatas)
+
     chunked_posts = Enum.chunk_every([nil] ++ sorted_posts ++ [nil], 3, 1, :discard)
     Enum.map(chunked_posts, &write_post/1)
 
-    post_metadatas = for {metadata, _, _, _} <- sorted_posts, into: [], do: metadata
     Output.Index.generate_post_index(post_metadatas)
     Output.RSS.generate_rss_feed(post_metadatas)
   end
 
-  def write_post([nil, post, next_post]) do
-    {metadata, post_body_html, _post_path, post_html_path} = post
-    {next_metadata, _, _, _} = next_post
-    post_html_path = Path.join(Util.get_blog_output_post_directory(), post_html_path)
-    IO.puts("Writing post #{metadata[:title]} to #{post_html_path}")
-
-    patched_metadata =
-      Keyword.merge(metadata,
-        next_post_path: "../posts/#{next_metadata[:filename]}",
-        next_post_title: next_metadata[:title]
-      )
-
-    Output.Post.write_post_file(post_html_path, patched_metadata, post_body_html)
+  def aggregate_metadata(metadatas) do
+    Enum.reduce(
+      metadatas,
+      %{series: %{}},
+      fn post_metadata, acc ->
+        acc
+      end
+    )
   end
 
-  def write_post([prev_post, post, nil]) do
-    {metadata, post_body_html, _post_path, post_html_path} = post
-    {prev_metadata, _, _, _} = prev_post
-    post_html_path = Path.join(Util.get_blog_output_post_directory(), post_html_path)
+  def write_post([
+        prev_post,
+        %Input.Post{metadata: metadata, html: post_body_html} = post,
+        next_post
+      ]) do
+    post_html_path = Path.join(Util.get_blog_output_post_directory(), metadata[:filename])
     IO.puts("Writing post #{metadata[:title]} to #{post_html_path}")
 
     patched_metadata =
       Keyword.merge(metadata,
-        prev_post_path: "../posts/#{prev_metadata[:filename]}",
-        prev_post_title: prev_metadata[:title]
-      )
-
-    Output.Post.write_post_file(post_html_path, patched_metadata, post_body_html)
-  end
-
-  def write_post([prev_post, post, next_post]) do
-    {metadata, post_body_html, _post_path, post_html_path} = post
-    {prev_metadata, _, _, _} = prev_post
-    {next_metadata, _, _, _} = next_post
-    post_html_path = Path.join(Util.get_blog_output_post_directory(), post_html_path)
-    IO.puts("Writing post #{metadata[:title]} to #{post_html_path}")
-
-    patched_metadata =
-      Keyword.merge(metadata,
-        next_post_path: "../posts/#{next_metadata[:filename]}",
-        next_post_title: next_metadata[:title],
-        prev_post_path: "../posts/#{prev_metadata[:filename]}",
-        prev_post_title: prev_metadata[:title]
+        next_post_path:
+          if next_post != nil do
+            "../posts/#{next_post.metadata[:filename]}"
+          else
+            ""
+          end,
+        next_post_title:
+          if next_post != nil do
+            "../posts/#{next_post.metadata[:title]}"
+          else
+            ""
+          end,
+        prev_post_path:
+          if prev_post != nil do
+            "../posts/#{prev_post.metadata[:filename]}"
+          else
+            ""
+          end,
+        prev_post_title:
+          if prev_post != nil do
+            "../posts/#{prev_post.metadata[:title]}"
+          else
+            ""
+          end
       )
 
     Output.Post.write_post_file(post_html_path, patched_metadata, post_body_html)

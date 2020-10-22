@@ -1,6 +1,8 @@
 defmodule Zamrazac.Input.Post do
   alias Zamrazac.Util
 
+  defstruct metadata: nil, html: nil
+
   @doc """
   Parses a post into the metadata, body html, and post path.
   """
@@ -21,7 +23,7 @@ defmodule Zamrazac.Input.Post do
     {:ok, post_html, []} = Earmark.as_html(raw_post_text)
 
     patched_html = patchup_images(metadata, post_html)
-    {metadata, patched_html, post_path, post_html_filename}
+    %__MODULE__{metadata: metadata, html: patched_html}
   end
 
   @doc """
