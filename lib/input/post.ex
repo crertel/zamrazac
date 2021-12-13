@@ -24,7 +24,6 @@ defmodule Zamrazac.Input.Post do
 
     metadata = Map.merge(%Zamrazac.Input.Metadata{}, parsed_metadata)
 
-    IO.inspect(metadata)
     {:ok, post_html, []} = Earmark.as_html(raw_post_text)
 
     patched_html = patchup_images(metadata, post_html)
@@ -45,7 +44,15 @@ defmodule Zamrazac.Input.Post do
 
       case clean_key do
         "tags" ->
-          {String.to_atom(key), String.split(val) |> Enum.map(&String.downcase/1)}
+          tags = val
+                |> String.split(",")
+                |> Enum.map( fn(tag) ->
+                  tag
+                  |> String.trim()
+                  |> String.downcase()
+                end)
+                |> Enum.reject( &(&1 == "") )
+          {String.to_atom(key), tags}
 
         "date" ->
           {:ok, datetime, _} = DateTime.from_iso8601(String.trim(val))
