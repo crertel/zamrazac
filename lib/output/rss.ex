@@ -1,5 +1,6 @@
 defmodule Zamrazac.Output.RSS do
   alias Zamrazac.Util
+  alias Zamrazac.Input.Metadata
 
   @doc """
   Renders the RSS feed for a blog.
@@ -9,8 +10,8 @@ defmodule Zamrazac.Output.RSS do
     IO.puts("Writing feed to #{feed_path}")
 
     organized_posts =
-      Enum.sort(post_metadatas, fn md1, md2 ->
-        DateTime.to_unix(md1[:date]) > DateTime.to_unix(md2[:date])
+      Enum.sort(post_metadatas, fn %Metadata{} = md1, %Metadata{} = md2 ->
+        DateTime.to_unix(md1.date) > DateTime.to_unix(md2.date)
       end)
 
     feed_content =
@@ -40,10 +41,10 @@ defmodule Zamrazac.Output.RSS do
       <atom:link href="<%= feed_url %>" rel="self" type="application/rss+xml" />
       <%= for post <- posts do %>
       <item>
-        <title><%= post[:title]%></title>
-        <link><%= post[:slug]%></link>
-        <pubDate><%= post[:date] |> Timex.format!("{RFC1123}") %></pubDate>
-        <guid isPermaLink="true"><%= post[:slug] %></guid>
+        <title><%= post.title%></title>
+        <link><%= post.slug%></link>
+        <pubDate><%= post.date |> Timex.format!("{RFC1123}") %></pubDate>
+        <guid isPermaLink="true"><%= post.slug %></guid>
       </item>
       <% end %>
       </channel>

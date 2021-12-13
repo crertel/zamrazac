@@ -1,26 +1,27 @@
 defmodule Zamrazac.Output.Post do
   alias Zamrazac.Util
+  alias Zamrazac.Input.Metadata
 
   @doc """
   Renders the actual post to an HTML file.
   """
-  def write_post_file(path, metadata, post_html) do
+  def write_post_file(path, %Metadata{} = metadata, post_html) do
     post_content =
       EEx.eval_string(
         post_template(),
         [
           blog_title: Util.get_blog_title(),
-          post_date: metadata[:date] |> DateTime.to_iso8601() |> String.slice(0..9),
-          post_title: metadata[:title],
-          post_author: metadata[:author],
+          post_date: metadata.date |> DateTime.to_iso8601() |> String.slice(0..9),
+          post_title: metadata.title,
+          post_author: metadata.author,
           post_metadata: inspect(metadata, pretty: true),
           post_body: EExHTML.raw(post_html),
           feed_url: Util.get_feed_url(),
           styles: EExHTML.raw(Util.get_styles()),
-          next_post_title: metadata[:next_post_title] || "",
-          next_post_path: metadata[:next_post_path] || "",
-          prev_post_title: metadata[:prev_post_title] || "",
-          prev_post_path: metadata[:prev_post_path] || ""
+          next_post_title: metadata.next_post_title || "",
+          next_post_path: metadata.next_post_path || "",
+          prev_post_title: metadata.prev_post_title || "",
+          prev_post_path: metadata.prev_post_path || ""
         ],
         engine: EExHTML.Engine
       )

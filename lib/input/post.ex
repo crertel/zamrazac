@@ -1,5 +1,6 @@
 defmodule Zamrazac.Input.Post do
   alias Zamrazac.Util
+  alias Zamrazac.Input.Metadata
 
   defstruct metadata: nil, html: nil
 
@@ -12,14 +13,18 @@ defmodule Zamrazac.Input.Post do
     post_basename = Path.basename(post_path, ".md")
     post_html_filename = "#{post_basename}.html"
 
-    metadata =
+    parsed_metadata =
       parse_metadata(raw_metadata_text) ++
         [
           filename: post_html_filename,
           basename: post_basename,
           slug: "#{Util.get_blog_posts_root()}#{URI.encode(post_basename)}.html"
         ]
+        |> Enum.into( %{} )
 
+    metadata = Map.merge(%Zamrazac.Input.Metadata{}, parsed_metadata)
+
+    IO.inspect(metadata)
     {:ok, post_html, []} = Earmark.as_html(raw_post_text)
 
     patched_html = patchup_images(metadata, post_html)
@@ -55,11 +60,11 @@ defmodule Zamrazac.Input.Post do
   @doc """
   Given post metadata and markup, sets up image directory for the output and runs the routines that do image patchup.
   """
-  def patchup_images(metadata, post_html) do
+  def patchup_images(%Metadata{} = metadata, post_html) do
     {:ok, dom} = Floki.parse_fragment(post_html)
 
     image_storage_path =
-      Path.join(Zamrazac.Util.get_blog_output_image_directory(), metadata[:basename])
+      Path.join(Zamrazac.Util.get_blog_output_image_directory(), metadata.basename)
 
     System.cmd("mkdir", ["-p", image_storage_path])
     patched_dom = Zamrazac.FlokiUtil.walk_dom(dom, image_storage_path)

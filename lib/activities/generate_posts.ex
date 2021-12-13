@@ -33,8 +33,8 @@ defmodule Zamrazac.Activities.GeneratePosts do
     posts = Enum.map(post_paths, &Input.Post.parse_post/1)
 
     sorted_posts =
-      Enum.sort_by(posts, fn %Input.Post{metadata: a_metadata} ->
-        a_metadata[:date] |> DateTime.to_iso8601()
+      Enum.sort_by(posts, fn %Input.Post{metadata: %Input.Metadata{} = a_metadata} ->
+        a_metadata.date |> DateTime.to_iso8601()
       end)
       |> Enum.reverse()
 
@@ -49,49 +49,45 @@ defmodule Zamrazac.Activities.GeneratePosts do
   end
 
   def aggregate_metadata(metadatas) do
-    Enum.reduce(
-      metadatas,
-      %{series: %{}},
-      fn post_metadata, acc ->
-        acc
-      end
-    )
+    Zamrazac.Aggregate.Series.run(metadatas)
+    %{}
   end
 
   def write_post([
         prev_post,
-        %Input.Post{metadata: metadata, html: post_body_html} = post,
+        %Input.Post{metadata: %Input.Metadata{} = metadata, html: post_body_html} = _post,
         next_post
       ]) do
-    post_html_path = Path.join(Util.get_blog_output_post_directory(), metadata[:filename])
-    IO.puts("Writing post #{metadata[:title]} to #{post_html_path}")
+    post_html_path = Path.join(Util.get_blog_output_post_directory(), metadata.filename)
+    #IO.puts("Writing post #{metadata[:title]} to #{post_html_path}")
 
     patched_metadata =
-      Keyword.merge(metadata,
+      Map.merge(metadata,%{
         next_post_path:
           if next_post != nil do
-            "../posts/#{next_post.metadata[:filename]}"
+            "../posts/#{next_post.metadata.filename}"
           else
             ""
           end,
         next_post_title:
           if next_post != nil do
-            "../posts/#{next_post.metadata[:title]}"
+            "#{next_post.metadata.title}"
           else
             ""
           end,
         prev_post_path:
           if prev_post != nil do
-            "../posts/#{prev_post.metadata[:filename]}"
+            "../posts/#{prev_post.metadata.filename}"
           else
             ""
           end,
         prev_post_title:
           if prev_post != nil do
-            "../posts/#{prev_post.metadata[:title]}"
+            "#{prev_post.metadata.title}"
           else
             ""
           end
+        }
       )
 
     Output.Post.write_post_file(post_html_path, patched_metadata, post_body_html)

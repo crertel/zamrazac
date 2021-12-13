@@ -1,5 +1,6 @@
 defmodule Zamrazac.Output.Index do
   alias Zamrazac.Util
+  alias Zamrazac.Input.Metadata
 
   @doc """
   Function that creates an index file given a pile of post metadata objects.
@@ -50,8 +51,8 @@ defmodule Zamrazac.Output.Index do
           <ul>
             <%= for post <- posts do %>
               <li>
-                <%= post[:date] |> DateTime.to_iso8601() |> String.slice( 0..9)%>
-                <a href="../posts/<%= post[:filename]%>"> <%= post[:title] %> </a>
+                <%= post.date |> DateTime.to_iso8601() |> String.slice( 0..9)%>
+                <a href="../posts/<%= post.filename%>"> <%= post.title %> </a>
               </li>
             <% end %>
           </ul>
