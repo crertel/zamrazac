@@ -9,8 +9,8 @@ defmodule Zamrazac.Aggregate.Tags do
   Given a collection of metadata structs, returns a map from tag to a list of slugs that it applies to.
   """
   def run(metadatas) when is_list(metadatas) do
-    all_tags_table = :ets.new(:zamrazac_aggregate_tags, [:set])
-    post_to_tags_table = :ets.new(:zamrazac_aggregate_post_tags, [:bag])
+    all_tags_table = :ets.new(:zamrazac_aggregate_tags, [:set, :named_table])
+    post_to_tags_table = :ets.new(:zamrazac_aggregate_post_tags, [:bag, :named_table])
     Enum.each( metadatas, fn %Metadata{} = metadata ->
       for tag <- metadata.tags do
         :ets.insert(all_tags_table, {tag})

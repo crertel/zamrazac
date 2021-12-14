@@ -10,8 +10,8 @@ defmodule Zamrazac.Aggregate.Series do
     |> Enum.group_by( fn( %Metadata{series: series})-> series end, fn %Metadata{slug: slug} -> slug end)
     |> Map.drop([nil, ""])
 
-    series_table = :ets.new(:zamrazac_aggregate_series, [:set])
-    slug_to_series_table = :ets.new(:zamrazac_aggregate_series, [:set])
+    series_table = :ets.new(:zamrazac_aggregate_series, [:set, :named_table])
+    slug_to_series_table = :ets.new(:zamrazac_aggregate_series_slug_mapping, [:set, :named_table])
     Enum.each(series_map, fn( {series, slugs}) ->
       :ets.insert(series_table, {series, slugs})
       for slug <- slugs do

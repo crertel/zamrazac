@@ -103,4 +103,16 @@ defmodule Zamrazac.Util do
         _ -> ""
     end
   end
+
+
+  def slugify_tag(tag) do
+    tag
+    |> String.trim()
+    |> String.downcase()
+    |> String.replace(~r/[[:space]]+/, "_")
+    |> String.replace(~r/\?/, "_")
+    |> String.replace(~r/#/, "_")
+    |> String.replace(~r/\./, "_")
+    |> String.replace(~r/\:/, "_")
+  end
 end

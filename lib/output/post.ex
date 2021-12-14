@@ -14,6 +14,7 @@ defmodule Zamrazac.Output.Post do
           post_date: metadata.date |> DateTime.to_iso8601() |> String.slice(0..9),
           post_title: metadata.title,
           post_author: metadata.author,
+          post_tags: metadata.tags,
           post_metadata: inspect(metadata, pretty: true),
           post_body: EExHTML.raw(post_html),
           feed_url: Util.get_feed_url(),
@@ -77,6 +78,17 @@ defmodule Zamrazac.Output.Post do
         <h3><%= post_author %></h3>
         <%= post_body %>
 
+        <%= if length(post_tags) > 0 do %>
+          <hr>
+          <div>
+          <b>Tags:</b>
+          <%= for tag <- post_tags do %>
+            <a href="/tag_index-<%= Zamrazac.Util.slugify_tag(tag)%>.html">
+            <%= tag %>
+            </a>
+          <% end %>
+          </div>
+        <% end %>
         <%= if length(series_information) > 0 do %>
           <hr>
           <div>

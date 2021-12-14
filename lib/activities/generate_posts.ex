@@ -34,7 +34,6 @@ defmodule Zamrazac.Activities.GeneratePosts do
     posts = Enum.map(post_paths, &Input.Post.parse_post/1)
 
     metadata_table = :ets.new(:zamrazac_metadata, [:named_table])
-    IO.inspect metadata_table
 
     sorted_posts =
       Enum.sort_by(posts, fn %Input.Post{metadata: %Input.Metadata{} = a_metadata} ->
@@ -48,12 +47,13 @@ defmodule Zamrazac.Activities.GeneratePosts do
       end
 
     series_map = Zamrazac.Aggregate.Series.run(post_metadatas)
-    #Zamrazac.Aggregate.Tags.run(metadatas)
+    Zamrazac.Aggregate.Tags.run(post_metadatas)
 
     chunked_posts = Enum.chunk_every([nil] ++ sorted_posts ++ [nil], 3, 1, :discard)
     Enum.map(chunked_posts, &(write_post(&1, series_map) ))
 
     Output.Index.generate_post_index(post_metadatas)
+    Output.TagIndices.generate_tag_indices()
     Output.RSS.generate_rss_feed(post_metadatas)
   end
 

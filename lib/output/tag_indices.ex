@@ -1,37 +1,45 @@
-defmodule Zamrazac.Output.Index do
+defmodule Zamrazac.Output.TagIndices do
   alias Zamrazac.Util
 
   @doc """
   Function that creates an index file given a pile of post metadata objects.
   """
-  def generate_post_index(post_metadatas) do
-    index_path = Path.join(Util.get_output_directory(), "index.html")
-    IO.puts("Writing index to #{index_path}")
-
+  def generate_tag_indices() do
     tag_table = :ets.whereis(:zamrazac_aggregate_tags)
-    tags = :ets.tab2list(tag_table) |> Enum.map(&(elem(&1,0)))
-
-    tags = for tag <- tags do
+    tag_slug_table = :ets.whereis(:zamrazac_aggregate_post_tags)
+    metadata_table = :ets.whereis(:zamrazac_metadata)
+    tags = :ets.tab2list(tag_table)
+    tag_links = for {tag} <- tags do
       tag_slug = Util.slugify_tag(tag)
       tag_index_path = "./tag_index-#{tag_slug}.html"
       {tag, tag_index_path}
     end
+    for {tag} <- tags do
+      tag_slug = Util.slugify_tag(tag)
+      index_path = Path.join(Util.get_output_directory(), "tag_index-#{tag_slug}.html")
 
+      post_slugs =  :ets.lookup(tag_slug_table, tag) |> Enum.map( &(elem(&1,1)))
+      posts = for slug <- post_slugs do
+        [{_slug, md}] = :ets.lookup(metadata_table, slug)
+        md
+      end
 
-    index_content =
-      EEx.eval_string(
-        index_template(),
-        [
-          posts: post_metadatas,
-          tags: tags,
-          blog_title: Util.get_blog_title(),
-          feed_url: Util.get_feed_url(),
-          styles: EExHTML.raw(Util.get_styles())
-        ],
-        engine: EExHTML.Engine
-      )
+      index_content =
+        EEx.eval_string(
+          index_template(),
+          [
+            tag: tag,
+            posts: posts,
+            tags: tag_links,
+            blog_title: Util.get_blog_title(),
+            feed_url: Util.get_feed_url(),
+            styles: EExHTML.raw(Util.get_styles())
+          ],
+          engine: EExHTML.Engine
+        )
 
-    :ok = File.write(index_path, "#{index_content}")
+      :ok = File.write(index_path, "#{index_content}")
+    end
   end
 
   def index_template() do
@@ -57,8 +65,8 @@ defmodule Zamrazac.Output.Index do
       </head>
       <body>
         <div class="post-main">
-        <div>
           <h1><%= blog_title %> Posts</h1>
+          <h2> Tagged <%= tag %> </h2>
           <ul>
             <%= for post <- posts do %>
               <li>
@@ -67,16 +75,22 @@ defmodule Zamrazac.Output.Index do
               </li>
             <% end %>
           </ul>
-          </div>
           <div>
-          <h2> Tags <h2>
+          <h2> Other tags <h2>
             <%= for {tag, tag_path} <- tags do %>
               <a href="<%= tag_path %>"> <%= tag %> </a>
             <% end %>
           </div>
           <div>
-          <a href="./feed.xml">RSS feed</a>
+
           </div>
+
+          <small>
+          <div class="post-nav-container">
+            <a class="post-nav-link" href="./feed.xml">RSS feed</a>
+            <a href="../index.html" class="post-nav-link">Back to index...</a>
+          </div>
+        </small>
         </div>
       </body>
     </html>
