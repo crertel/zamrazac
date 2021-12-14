@@ -1,6 +1,5 @@
 defmodule Zamrazac.Output.Index do
   alias Zamrazac.Util
-  alias Zamrazac.Input.Metadata
 
   @doc """
   Function that creates an index file given a pile of post metadata objects.
@@ -56,6 +55,9 @@ defmodule Zamrazac.Output.Index do
               </li>
             <% end %>
           </ul>
+          <div>
+          <a href="./feed.xml">RSS feed</a>
+          </div>
         </div>
       </body>
     </html>
