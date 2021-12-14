@@ -34,13 +34,11 @@ defmodule Zamrazac.Input.Post do
   Given a zamrazac-style post metadata string parses it out to a keyword list.
   """
   def parse_metadata(raw_metadata_string) do
-    metadata_string = raw_metadata_string |> String.trim()
-
-    metadata_string
+    raw_metadata_string
     |> String.split("\n", trim: true)
     |> Enum.map(&String.split(&1, ":", parts: 2))
     |> Enum.map(fn [key, val] ->
-      clean_key = String.trim(key)
+      clean_key = String.trim(key) |> String.downcase()
 
       case clean_key do
         "tags" ->
@@ -57,6 +55,9 @@ defmodule Zamrazac.Input.Post do
         "date" ->
           {:ok, datetime, _} = DateTime.from_iso8601(String.trim(val))
           {String.to_atom(key), datetime}
+
+        "series" ->
+          {String.to_atom(key), String.trim(val)}
 
         _ ->
           {String.to_atom(key), String.trim(val)}

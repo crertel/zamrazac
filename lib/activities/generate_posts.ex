@@ -22,6 +22,7 @@ defmodule Zamrazac.Activities.GeneratePosts do
   alias Zamrazac.Output
   alias Zamrazac.Input
 
+
   @doc """
   Function to crawl a posts directory and turn it into html, generate an index, and generate supporting image files.
   """
@@ -32,34 +33,45 @@ defmodule Zamrazac.Activities.GeneratePosts do
     System.cmd("mkdir", ["-p", Util.get_blog_output_post_directory()])
     posts = Enum.map(post_paths, &Input.Post.parse_post/1)
 
+    metadata_table = :ets.new(:zamrazac_metadata, [:named_table])
+    IO.inspect metadata_table
+
     sorted_posts =
       Enum.sort_by(posts, fn %Input.Post{metadata: %Input.Metadata{} = a_metadata} ->
         a_metadata.date |> DateTime.to_iso8601()
       end)
       |> Enum.reverse()
 
-    post_metadatas = for %Input.Post{metadata: metadata} <- sorted_posts, into: [], do: metadata
-    # agg_post_data = aggregate_metadata(post_metadatas)
+      post_metadatas = for %Input.Post{metadata: metadata} <- sorted_posts, into: [] do
+        :ets.insert(metadata_table, {metadata.slug, metadata})
+        metadata
+      end
+
+    series_map = Zamrazac.Aggregate.Series.run(post_metadatas)
+    #Zamrazac.Aggregate.Tags.run(metadatas)
 
     chunked_posts = Enum.chunk_every([nil] ++ sorted_posts ++ [nil], 3, 1, :discard)
-    Enum.map(chunked_posts, &write_post/1)
+    Enum.map(chunked_posts, &(write_post(&1, series_map) ))
 
     Output.Index.generate_post_index(post_metadatas)
     Output.RSS.generate_rss_feed(post_metadatas)
-  end
-
-  def aggregate_metadata(metadatas) do
-    Zamrazac.Aggregate.Series.run(metadatas)
-    %{}
   end
 
   def write_post([
         prev_post,
         %Input.Post{metadata: %Input.Metadata{} = metadata, html: post_body_html} = _post,
         next_post
-      ]) do
+      ], series_map) do
     post_html_path = Path.join(Util.get_blog_output_post_directory(), metadata.filename)
-    #IO.puts("Writing post #{metadata[:title]} to #{post_html_path}")
+
+    series_information = Map.get(series_map, metadata.series, [])
+
+    metadata_table = :ets.whereis(:zamrazac_metadata)
+
+    series_metadata = for series_entry_slug <- series_information do
+      [{_slug, %Input.Metadata{} = md }] = :ets.lookup(metadata_table, series_entry_slug)
+      md
+    end
 
     patched_metadata =
       Map.merge(metadata,%{
@@ -90,7 +102,7 @@ defmodule Zamrazac.Activities.GeneratePosts do
         }
       )
 
-    Output.Post.write_post_file(post_html_path, patched_metadata, post_body_html)
+    Output.Post.write_post_file(post_html_path, patched_metadata, post_body_html, series_metadata)
   end
 
   @doc """

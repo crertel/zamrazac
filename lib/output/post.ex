@@ -5,7 +5,7 @@ defmodule Zamrazac.Output.Post do
   @doc """
   Renders the actual post to an HTML file.
   """
-  def write_post_file(path, %Metadata{} = metadata, post_html) do
+  def write_post_file(path, %Metadata{} = metadata, post_html, series_information) do
     post_content =
       EEx.eval_string(
         post_template(),
@@ -21,7 +21,11 @@ defmodule Zamrazac.Output.Post do
           next_post_title: metadata.next_post_title || "",
           next_post_path: metadata.next_post_path || "",
           prev_post_title: metadata.prev_post_title || "",
-          prev_post_path: metadata.prev_post_path || ""
+          prev_post_path: metadata.prev_post_path || "",
+          post_series: metadata.series,
+          series_information: series_information |> Enum.sort(fn (a,b) ->
+            Date.compare(a.date, b.date) != :lt # blech, fix this when I'm not tired
+          end)
         ],
         engine: EExHTML.Engine
       )
@@ -72,6 +76,22 @@ defmodule Zamrazac.Output.Post do
         <h2><%=post_date %> -- <%= post_title %></h2>
         <h3><%= post_author %></h3>
         <%= post_body %>
+
+        <%= if length(series_information) > 0 do %>
+          <hr>
+          <div>
+            <h3>Other <%= post_series %> posts:</h3>
+            <ul>
+            <%= for post_in_series <- series_information do %>
+              <li>
+                <a href="../posts/<%= post_in_series.filename %>">
+                <%= post_in_series.date %> - <%= post_in_series.title %>
+                </a>
+              </li>
+            <% end %>
+            </ul>
+          </div>
+        <% end %>
 
         <hr>
         <small>

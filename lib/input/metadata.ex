@@ -6,5 +6,6 @@ defmodule Zamrazac.Input.Metadata do
             tags: nil,
             filename: nil,
             basename: nil,
-            slug: nil
+            slug: nil,
+            series: nil
 end
