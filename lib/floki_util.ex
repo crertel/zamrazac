@@ -20,7 +20,7 @@ defmodule Zamrazac.FlokiUtil do
         {"img", attributes, children} ->
           attrs = attributes_to_keywords(attributes)
           image_src = attrs[:src]
-          #IO.inspect("Referenced image #{image_src}", limit: :infinity)
+          # IO.inspect("Referenced image #{image_src}", limit: :infinity)
 
           {dithered_file_encoded, _temp_image_path, is_local} =
             convert_image(image_src, image_storage_path)
@@ -91,7 +91,7 @@ defmodule Zamrazac.FlokiUtil do
         {dithered_file_encoded, temp_image_path, true}
 
       true ->
-        #IO.inspect("\tFailed to locate image at  #{url}...", limit: :infinity)
+        # IO.inspect("\tFailed to locate image at  #{url}...", limit: :infinity)
         {"", "", true}
     end
   end
@@ -102,17 +102,17 @@ defmodule Zamrazac.FlokiUtil do
   def maybe_download_image(image_path, url, is_local) do
     case File.exists?(image_path) do
       true ->
-        #IO.inspect("\tReusing image #{image_path}...", limit: :infinity)
+        # IO.inspect("\tReusing image #{image_path}...", limit: :infinity)
         image_path
 
       false ->
         if is_local do
-          #IO.inspect("\tCopying local image from #{url} to #{image_path}...", limit: :infinity)
+          # IO.inspect("\tCopying local image from #{url} to #{image_path}...", limit: :infinity)
           System.cmd("cp", [url, image_path])
           image_path
         else
-          #IO.inspect("\tDownloading image #{image_path}...", limit: :infinity)
-          System.cmd("curl", [url, "-L", "-o", image_path])
+          # IO.inspect("\tDownloading image #{image_path}...", limit: :infinity)
+          System.cmd("curl", [url, "-s", "-L", "-o", image_path])
           image_path
         end
     end
@@ -124,14 +124,15 @@ defmodule Zamrazac.FlokiUtil do
   def maybe_dither_image(image_path, source_image_path) do
     case File.exists?(image_path) do
       true ->
-        #IO.inspect("\tReusing dithered image #{image_path}...", limit: :infinity)
+        # IO.inspect("\tReusing dithered image #{image_path}...", limit: :infinity)
         nil
 
       false ->
-        #IO.inspect("\tConverting dithered image #{image_path}...", limit: :infinity)
+        # IO.inspect("\tConverting dithered image #{image_path}...", limit: :infinity)
 
         System.cmd("convert", [
           source_image_path,
+          "-quiet",
           "-colorspace",
           "Gray",
           "-ordered-dither",
