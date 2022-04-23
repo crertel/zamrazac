@@ -1,5 +1,6 @@
 defmodule Zamrazac.Output.TagIndices do
   alias Zamrazac.Util
+  use Phoenix.HTML
 
   @doc """
   Function that creates an index file given a pile of post metadata objects.
@@ -9,22 +10,27 @@ defmodule Zamrazac.Output.TagIndices do
     tag_slug_table = :ets.whereis(:zamrazac_aggregate_post_tags)
     metadata_table = :ets.whereis(:zamrazac_metadata)
     tags = :ets.tab2list(tag_table)
-    tag_links = for {tag} <- tags do
-      tag_slug = Util.slugify_tag(tag)
-      tag_index_path = "./tag_index-#{tag_slug}.html"
-      {tag, tag_index_path}
-    end
+
+    tag_links =
+      for {tag} <- tags do
+        tag_slug = Util.slugify_tag(tag)
+        tag_index_path = "./tag_index-#{tag_slug}.html"
+        {tag, tag_index_path}
+      end
+
     for {tag} <- tags do
       tag_slug = Util.slugify_tag(tag)
       index_path = Path.join(Util.get_output_directory(), "tag_index-#{tag_slug}.html")
 
-      post_slugs =  :ets.lookup(tag_slug_table, tag) |> Enum.map( &(elem(&1,1)))
-      posts = for slug <- post_slugs do
-        [{_slug, md}] = :ets.lookup(metadata_table, slug)
-        md
-      end
+      post_slugs = :ets.lookup(tag_slug_table, tag) |> Enum.map(&elem(&1, 1))
 
-      index_content =
+      posts =
+        for slug <- post_slugs do
+          [{_slug, md}] = :ets.lookup(metadata_table, slug)
+          md
+        end
+
+      {:safe, index_content} =
         EEx.eval_string(
           index_template(),
           [
@@ -33,9 +39,9 @@ defmodule Zamrazac.Output.TagIndices do
             tags: tag_links,
             blog_title: Util.get_blog_title(),
             feed_url: Util.get_feed_url(),
-            styles: EExHTML.raw(Util.get_styles())
+            styles: Util.get_styles()
           ],
-          engine: EExHTML.Engine
+          engine: Phoenix.HTML.Engine
         )
 
       :ok = File.write(index_path, "#{index_content}")
@@ -59,7 +65,7 @@ defmodule Zamrazac.Output.TagIndices do
           margin: auto;
         }
 
-        <%= styles || "" %>
+        <%= Phoenix.HTML.raw styles || "" %>
         </style>
         <link rel="alternate" type="application/rss+xml" href="<%= feed_url %>" title="<%= blog_title %>">
       </head>
