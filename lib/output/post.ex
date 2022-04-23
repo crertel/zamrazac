@@ -1,12 +1,13 @@
 defmodule Zamrazac.Output.Post do
   alias Zamrazac.Util
   alias Zamrazac.Input.Metadata
+  use Phoenix.HTML
 
   @doc """
   Renders the actual post to an HTML file.
   """
   def write_post_file(path, %Metadata{} = metadata, post_html, series_information) do
-    post_content =
+    {:safe, post_content} =
       EEx.eval_string(
         post_template(),
         [
@@ -16,19 +17,22 @@ defmodule Zamrazac.Output.Post do
           post_author: metadata.author,
           post_tags: metadata.tags,
           post_metadata: inspect(metadata, pretty: true),
-          post_body: EExHTML.raw(post_html),
+          post_body: post_html,
           feed_url: Util.get_feed_url(),
-          styles: EExHTML.raw(Util.get_styles()),
+          styles: Util.get_styles(),
           next_post_title: metadata.next_post_title || "",
           next_post_path: metadata.next_post_path || "",
           prev_post_title: metadata.prev_post_title || "",
           prev_post_path: metadata.prev_post_path || "",
           post_series: metadata.series,
-          series_information: series_information |> Enum.sort(fn (a,b) ->
-            Date.compare(a.date, b.date) != :lt # blech, fix this when I'm not tired
-          end)
+          series_information:
+            series_information
+            |> Enum.sort(fn a, b ->
+              # blech, fix this when I'm not tired
+              Date.compare(a.date, b.date) != :lt
+            end)
         ],
-        engine: EExHTML.Engine
+        engine: Phoenix.HTML.Engine
       )
 
     :ok = File.write(path, "#{post_content}")
@@ -51,7 +55,7 @@ defmodule Zamrazac.Output.Post do
           margin: auto;
         }
 
-        <%= styles || "" %>
+        <%= Phoenix.HTML.raw styles || "" %>
         </style>
         <link rel="alternate" type="application/rss+xml" href="<%= feed_url %>" title="<%= blog_title %>">
       </head>
@@ -76,7 +80,7 @@ defmodule Zamrazac.Output.Post do
         <h1><%= blog_title %></h1>
         <h2><%=post_date %> -- <%= post_title %></h2>
         <h3><%= post_author %></h3>
-        <%= post_body %>
+        <%= Phoenix.HTML.raw post_body %>
 
         <%= if length(post_tags) > 0 do %>
           <hr>

@@ -14,7 +14,7 @@ defmodule Zamrazac.Output.RSS do
         DateTime.to_unix(md1.date) > DateTime.to_unix(md2.date)
       end)
 
-    feed_content =
+    {:safe, feed_content} =
       EEx.eval_string(
         rss_template(),
         [
@@ -24,7 +24,7 @@ defmodule Zamrazac.Output.RSS do
           blog_description: Util.get_blog_description(),
           feed_url: Util.get_feed_url()
         ],
-        engine: EExHTML.Engine
+        engine: Phoenix.HTML.Engine
       )
 
     :ok = File.write(feed_path, "#{feed_content}")

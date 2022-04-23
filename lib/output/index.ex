@@ -1,5 +1,6 @@
 defmodule Zamrazac.Output.Index do
   alias Zamrazac.Util
+  use Phoenix.HTML
 
   @doc """
   Function that creates an index file given a pile of post metadata objects.
@@ -9,16 +10,16 @@ defmodule Zamrazac.Output.Index do
     IO.puts("Writing index to #{index_path}")
 
     tag_table = :ets.whereis(:zamrazac_aggregate_tags)
-    tags = :ets.tab2list(tag_table) |> Enum.map(&(elem(&1,0)))
+    tags = :ets.tab2list(tag_table) |> Enum.map(&elem(&1, 0))
 
-    tags = for tag <- tags do
-      tag_slug = Util.slugify_tag(tag)
-      tag_index_path = "./tag_index-#{tag_slug}.html"
-      {tag, tag_index_path}
-    end
+    tags =
+      for tag <- tags do
+        tag_slug = Util.slugify_tag(tag)
+        tag_index_path = "./tag_index-#{tag_slug}.html"
+        {tag, tag_index_path}
+      end
 
-
-    index_content =
+    {:safe, index_content} =
       EEx.eval_string(
         index_template(),
         [
@@ -26,9 +27,9 @@ defmodule Zamrazac.Output.Index do
           tags: tags,
           blog_title: Util.get_blog_title(),
           feed_url: Util.get_feed_url(),
-          styles: EExHTML.raw(Util.get_styles())
+          styles: Util.get_styles()
         ],
-        engine: EExHTML.Engine
+        engine: Phoenix.HTML.Engine
       )
 
     :ok = File.write(index_path, "#{index_content}")
@@ -51,7 +52,7 @@ defmodule Zamrazac.Output.Index do
           margin: auto;
         }
 
-        <%= styles || "" %>
+        <%= Phoenix.HTML.raw styles || "" %>
         </style>
         <link rel="alternate" type="application/rss+xml" href="<%= feed_url %>" title="<%= blog_title %>">
       </head>
