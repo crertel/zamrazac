@@ -31,7 +31,9 @@ popd () {
 }
 
 pushd "$ZAMRAZAC_PATH"
-BLOG_DIRECTORY="$BLOG_DIRECTORY" BLOG_AUTHOR="$BLOG_AUTHOR" mix zamrazac.create "$1"
+BLOG_DIRECTORY="$BLOG_DIRECTORY" \
+BLOG_AUTHOR="$BLOG_AUTHOR" \
+mix zamrazac.create "$1" | grep -oP "^OUTPUT: \K.*$" | xargs "$EDITOR"
 popd
 ```
 

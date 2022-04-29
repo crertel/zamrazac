@@ -23,7 +23,6 @@ defmodule Zamrazac.MixProject do
     [
       {:floki, "~> 0.32.1"},
       {:earmark, "~> 1.4.24"},
-      {:execv, "~> 0.1.2"},
       {:phoenix_html, "~> 3.2"},
       {:timex, "~> 3.7.7"}
     ]
