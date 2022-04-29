@@ -6,19 +6,24 @@ defmodule Zamrazac.Aggregate.Series do
   """
 
   def run(metadatas) when is_list(metadatas) do
-    series_map = metadatas
-    |> Enum.group_by( fn( %Metadata{series: series})-> series end, fn %Metadata{slug: slug} -> slug end)
-    |> Map.drop([nil, ""])
+    series_map =
+      metadatas
+      |> Enum.group_by(fn %Metadata{series: series} -> series end, fn %Metadata{slug: slug} ->
+        slug
+      end)
+      |> Map.drop([nil, ""])
 
     series_table = :ets.new(:zamrazac_aggregate_series, [:set, :named_table])
     slug_to_series_table = :ets.new(:zamrazac_aggregate_series_slug_mapping, [:set, :named_table])
-    Enum.each(series_map, fn( {series, slugs}) ->
+
+    Enum.each(series_map, fn {series, slugs} ->
       :ets.insert(series_table, {series, slugs})
+
       for slug <- slugs do
         :ets.insert(slug_to_series_table, {slug, series})
       end
     end)
-    Enum.into( :ets.tab2list(series_table), %{})
-  end
 
+    Enum.into(:ets.tab2list(series_table), %{})
+  end
 end

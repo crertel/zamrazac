@@ -23,7 +23,6 @@ defmodule Zamrazac.Util do
     "#{get_blog_url()}/feed.xml"
   end
 
-
   @doc """
   get_blog_directory will return the directory where blog files are stored.
   First check the value of $BLOG_DIRECTORY in the environment, otherwise default to ./blog
@@ -98,12 +97,12 @@ defmodule Zamrazac.Util do
   """
   def get_styles() do
     styles_path = System.get_env("BLOG_STYLES") |> Path.expand()
+
     case File.read(styles_path) do
       {:ok, file_data} -> file_data
-        _ -> ""
+      _ -> ""
     end
   end
-
 
   def slugify_tag(tag) do
     tag

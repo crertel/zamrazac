@@ -30,7 +30,7 @@ defmodule Zamrazac.Activities.CreatePost do
     )
 
     File.close(myfile)
-    Execv.exec([System.find_executable("vim"), "+", filename])
+    IO.puts("OUTPUT: #{filename}")
   end
 
   @doc """

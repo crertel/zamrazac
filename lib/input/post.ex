@@ -14,13 +14,13 @@ defmodule Zamrazac.Input.Post do
     post_html_filename = "#{post_basename}.html"
 
     parsed_metadata =
-      parse_metadata(raw_metadata_text) ++
-        [
-          filename: post_html_filename,
-          basename: post_basename,
-          slug: "#{Util.get_blog_posts_root()}#{URI.encode(post_basename)}.html"
-        ]
-        |> Enum.into( %{} )
+      (parse_metadata(raw_metadata_text) ++
+         [
+           filename: post_html_filename,
+           basename: post_basename,
+           slug: "#{Util.get_blog_posts_root()}#{URI.encode(post_basename)}.html"
+         ])
+      |> Enum.into(%{})
 
     metadata = Map.merge(%Zamrazac.Input.Metadata{}, parsed_metadata)
 
@@ -42,14 +42,16 @@ defmodule Zamrazac.Input.Post do
 
       case clean_key do
         "tags" ->
-          tags = val
-                |> String.split(",")
-                |> Enum.map( fn(tag) ->
-                  tag
-                  |> String.trim()
-                  |> String.downcase()
-                end)
-                |> Enum.reject( &(&1 == "") )
+          tags =
+            val
+            |> String.split(",")
+            |> Enum.map(fn tag ->
+              tag
+              |> String.trim()
+              |> String.downcase()
+            end)
+            |> Enum.reject(&(&1 == ""))
+
           {String.to_atom(key), tags}
 
         "date" ->
